@@ -455,30 +455,88 @@
     }
     window.RDW_SET_PLUG = setPlugged;
 
+    /* Dragging used to be a threshold test: move far enough and the plug
+       snapped out, with nothing in between. Now it follows the pointer, the
+       lead pays out with it, and letting go either seats it again or leaves
+       it out depending on how far it was pulled — which is how a plug
+       actually behaves. */
+
+    var cableW = document.querySelector('.mc-wire');
+    var cableL = document.querySelector('.mc-live');
+    var powerBox = document.querySelector('.machine-power');
+    var spark = document.querySelector('.ms-spark');
+
+    var CABLE_HOME = [283, 20, 250, 52];       // start point and first control
+    var PULL_OUT = 30;                         // px before it comes loose
+
+    function cablePath(dx, dy) {
+      var r = powerBox ? powerBox.getBoundingClientRect() : null;
+      var kx = r && r.width ? 300 / r.width : 1;
+      var ky = r && r.height ? 62 / r.height : 1;
+      var x0 = CABLE_HOME[0] + dx * kx;
+      var y0 = CABLE_HOME[1] + dy * ky;
+      var cx = CABLE_HOME[2] + dx * kx * 0.55;
+      var cy = CABLE_HOME[3] + dy * ky * 0.75;
+      return 'M' + x0.toFixed(1) + ' ' + y0.toFixed(1) +
+             ' C ' + cx.toFixed(1) + ' ' + cy.toFixed(1) +
+             ', 196 30, 140 44 C 84 58, 44 44, 8 60';
+    }
+
+    function setCable(dx, dy) {
+      var d = (dx === null) ? '' : cablePath(dx, dy);
+      if (cableW) { if (d) cableW.setAttribute('d', d); else cableW.removeAttribute('style'); }
+      if (cableL && d) cableL.setAttribute('d', d);
+    }
+
     if (plugBtn) {
-      var dragging = false, sx = 0, sy = 0, moved = 0;
+      var dragging = false, sx = 0, sy = 0, dx = 0, dy = 0;
+
+      function endDrag() {
+        dragging = false;
+        plugBtn.classList.remove('is-dragging');
+        plugBtn.style.transform = '';
+        if (cableW) cableW.removeAttribute('d');
+        if (cableL) cableL.removeAttribute('d');
+      }
 
       plugBtn.addEventListener('pointerdown', function (e) {
-        dragging = true; moved = 0;
+        if (!plugged) return;                  // already out: a tap puts it back
+        dragging = true; dx = dy = 0;
         sx = e.clientX; sy = e.clientY;
+        plugBtn.classList.add('is-dragging');
         try { plugBtn.setPointerCapture(e.pointerId); } catch (err) { /* older engines */ }
+        e.preventDefault();
       });
 
       plugBtn.addEventListener('pointermove', function (e) {
         if (!dragging) return;
-        moved = Math.max(moved, Math.hypot(e.clientX - sx, e.clientY - sy));
-        // pulling away from the socket unplugs it part way through the drag
-        if (plugged && moved > 26) { setPlugged(false); dragging = false; }
+        /* sideways movement is damped and downward travel is capped, so the
+           plug stays on its lead instead of being flung across the page */
+        dx = (e.clientX - sx) * 0.45;
+        dy = Math.max(-6, Math.min(56, e.clientY - sy));
+        if (dx < -34) dx = -34;
+        if (dx > 34) dx = 34;
+        plugBtn.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
+        setCable(dx, dy);
       });
 
       plugBtn.addEventListener('pointerup', function (e) {
-        if (!dragging) return;
-        dragging = false;
         try { plugBtn.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-        if (moved <= 6) setPlugged(!plugged);      // a tap toggles
+        if (!dragging) { setPlugged(!plugged); return; }   // a tap toggles
+        var pulled = Math.hypot(dx, dy);
+        endDrag();
+        if (pulled > PULL_OUT) {
+          setPlugged(false);
+          if (spark && !reduced) {
+            spark.classList.remove('is-lit');
+            void spark.offsetWidth;                        // restart the flash
+            spark.classList.add('is-lit');
+          }
+        }
+        // otherwise it springs back into the socket on its own
       });
 
-      plugBtn.addEventListener('pointercancel', function () { dragging = false; });
+      plugBtn.addEventListener('pointercancel', endDrag);
       plugBtn.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPlugged(!plugged); }
       });

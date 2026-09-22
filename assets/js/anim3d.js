@@ -434,7 +434,10 @@
        It boots as a plain grey box; once the robot starts writing code the
        keyboard lighting comes up. The ramp is slow on purpose so it reads
        as the machine waking up rather than as a light switch. */
-    st.rgb = clamp01((t - T.hopFrom + 400) / 2600) * (t > T.fadeTo - 900 ? clamp01((T.fadeTo - t) / 900) : 1);
+    /* the chassis modernises slightly ahead of the lighting, so the shape
+       changes first and the backlight arrives as the finishing touch */
+    st.modern = clamp01((t - T.hopFrom + 900) / 2200);
+    st.rgb = clamp01((t - T.hopFrom + 200) / 2900) * (t > T.fadeTo - 900 ? clamp01((T.fadeTo - t) / 900) : 1);
     st.rgbT = t;
 
     /* ---- typing: one line per hop ---- */

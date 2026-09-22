@@ -80,9 +80,18 @@ erweitert:
   `shiftX` verschiebt den Bildmittelpunkt, ohne die Perspektive zu verzerren
   — so sitzen die Objekte links und die Überschrift rechts. Auf schmalen
   Bildschirmen setzt `hero3d.js` die Verschiebung zurück.
-- **Die RGB-Beleuchtung** der Tastatur fährt hoch, sobald der Roboter zu
-  tippen beginnt (`st.rgb` in `anim3d.js`, `backlight()` und `rgbGlow()` in
-  `scene3d.js`). Jede Taste hat ein eigenes Materialobjekt, dessen Farbe pro
+- **Der Laptop baut sich um**, sobald der Roboter zu tippen beginnt. Er
+  entsteht aus einem einzigen Wert (`st.modern`, 0 = die kantige Kiste vom
+  Start, 1 = ein schlankes Gerät): Aus breiten Rändern wird ein Bildschirm,
+  der die Klappe fast ausfüllt, die Klappe selbst wird dünner, eine
+  Kameraaussparung, eine Fase an der Vorderkante und Lautsprechergitter
+  kommen dazu, und die Gehäusefarbe wandert von stumpfem Kunststoff zu
+  etwas Metallischem. `buildShell()` in `scene3d.js` baut nur die Hülle neu
+  und lässt die Tasten unangetastet — der Roboter zielt beim Springen auf
+  sie, sie dürfen sich also nicht bewegen. Aus demselben Grund bleibt die
+  Höhe des Unterteils fest.
+- **Die RGB-Beleuchtung** der Tastatur fährt kurz danach hoch (`st.rgb` in
+  `anim3d.js`, `backlight()` und `rgbGlow()` in `scene3d.js`). Jede Taste hat ein eigenes Materialobjekt, dessen Farbe pro
   Bild gesetzt wird; eine Farbwelle läuft anhand der Position über das
   Brett. Geometrie wird dafür nicht angefasst.
 - **Farben und Licht** stehen in `MAT` und `THEMES` in `scene3d.js`.
@@ -146,6 +155,13 @@ erscheint eine rote Meldung mit `ERROR 007`, die Leuchtdiode wird rot, der
 Bildschirm wird flau und bekommt einen roten Schimmer, die Tastatur reagiert
 nicht mehr, und das Formular lässt sich nicht absenden. Ein Klick auf den
 Stecker oder auf „Stecker einstecken“ stellt alles wieder her.
+
+Der Stecker folgt beim Ziehen dem Zeiger, und das Kabel gibt mit ihm nach —
+seitlich gedämpft und nach unten begrenzt, damit er an seiner Leitung bleibt.
+Beim Loslassen entscheidet die zurückgelegte Strecke: knapp gezogen rutscht
+er zurück in die Dose, weit gezogen bleibt er draußen und an der Dose blitzt
+kurz ein Funke. Vorher war es ein reiner Schwellwert — ab einer gewissen
+Entfernung sprang er heraus, dazwischen passierte nichts.
 
 Die Felder werden dabei auf `readonly` gesetzt statt auf `disabled`: Sie
 bleiben vorlesbar und mit der Tastatur erreichbar, nehmen aber nichts an.

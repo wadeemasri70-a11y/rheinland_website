@@ -24,6 +24,8 @@
      #01247A navy · #00B2C0 cyan · #001854 deep navy · #E4791E orange
      ─────────────────────────────────────────────────────────────────── */
 
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
   function M(night, day, extra) {
     var m = { n: night, d: day };
     if (extra) for (var k in extra) m[k] = extra[k];
@@ -46,6 +48,8 @@
     lidFace:  M([14, 22, 38],  [120, 133, 154]),
     deck:     M([30, 45, 72],  [186, 196, 211]),
     key:      M([13, 21, 36],  [126, 139, 160]),
+    chrome:   M([96, 124, 162], [232, 236, 241]),
+    grille:   M([8, 13, 23],    [150, 158, 170]),
     keyLit:   M([0, 138, 158], [0, 158, 178]),
 
     socket:   M([34, 50, 78],  [236, 240, 246]),
@@ -123,29 +127,110 @@
   /* ── laptop ──────────────────────────────────────────────────────── */
 
   var LAPTOP = { x: 34, z: -20, rot: -1.30 };
-  var SCR_W = 31, SCR_H = 20.5;          // screen panel, in laptop units
+
+  /* The laptop is built from a single "modernity" value: 0 is the boxy
+     machine it boots as, 1 is a slim modern one. Fat bezels give way to a
+     screen that nearly fills the lid, the lid itself gets thinner, a camera
+     notch appears, the front edge picks up a chamfer and speaker grilles
+     show up beside the keyboard. The shell colour shifts from dull plastic
+     to something more metallic at the same time.
+
+     Only the shell is rebuilt. The keys keep their positions, because the
+     robot's hop targets are derived from them and must not drift. */
+
+  var SCR_W = 28.6, SCR_H = 18.6;          // screen panel, in laptop units
+  var SCREEN_QUAD = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+  var LID_TILT = 0.30;
 
   var laptop = world.add(new E.Node('laptop'));
   laptop.setTRS([E.trans(LAPTOP.x, 0, LAPTOP.z), E.rotY(LAPTOP.rot)]);
-  laptop.faces = E.box([0, 0.75, 0], [23, 1.5, 33], {
-    top: MAT.deck, bottom: MAT.lidFace, front: MAT.lidBack, back: MAT.lidBack,
-    left: MAT.lidBack, right: MAT.lidBack
-  });
+  laptop.faces = [];
 
+  var chassis = laptop.add(new E.Node('chassis'));
   var lid = laptop.add(new E.Node('lid'));
-  lid.setTRS([E.trans(-11.5, 1.5, 0), E.rotZ(0.30)]);
-  lid.faces = []
-    .concat(E.box([-0.6, SCR_H / 2 + 1, 0], [1.2, SCR_H + 2.4, SCR_W + 2], MAT.lidBack, { right: true }))
-    .concat(E.quad(
-      [0.05, 1.2, SCR_W / 2], [0.05, 1.2, -SCR_W / 2],
-      [0.05, SCR_H + 1.2, -SCR_W / 2], [0.05, SCR_H + 1.2, SCR_W / 2], MAT.screen));
 
-  /* the screen quad, kept apart so text can be drawn into its plane */
-  var SCREEN_QUAD = [
-    [0.06, SCR_H + 1.2, SCR_W / 2],   // top-left as seen from the front
-    [0.06, SCR_H + 1.2, -SCR_W / 2],  // top-right
-    [0.06, 1.2, SCR_W / 2]            // bottom-left
-  ];
+  /* shell colours, old → modern */
+  var SHELL = {
+    lidBack: { a: [27, 42, 68],  b: [46, 66, 96],  ad: [150, 163, 184], bd: [196, 202, 210] },
+    deck:    { a: [30, 45, 72],  b: [44, 63, 92],  ad: [186, 196, 211], bd: [206, 211, 218] },
+    lidFace: { a: [14, 22, 38],  b: [22, 33, 52],  ad: [120, 133, 154], bd: [150, 158, 170] }
+  };
+
+  var modernity = -1;
+
+  function buildShell(m) {
+    if (Math.abs(m - modernity) < 0.012) return;
+    modernity = m;
+
+    var bez   = lerp(2.4, 0.75, m);     // frame around the panel
+    var lidD  = lerp(1.2, 0.5, m);      // how thick the lid is
+    var baseH = 1.5;                    // fixed: the keys and hop targets sit on it
+    SCR_W = lerp(28.6, 32.2, m);
+    SCR_H = lerp(18.6, 21.8, m);
+    LID_TILT = lerp(0.30, 0.23, m);
+
+    var outW = SCR_W + bez * 2;
+    var outH = SCR_H + bez * 2;
+    var y0 = 0.9;                        // lid starts just above the hinge
+    var sy0 = y0 + bez;                  // panel bottom
+
+    lid.setTRS([E.trans(-11.5, baseH, 0), E.rotZ(LID_TILT)]);
+
+    var f = E.box([-lidD / 2, y0 + outH / 2, 0], [lidD, outH, outW], MAT.lidBack, { right: true })
+      .concat(E.quad(
+        [0.05, sy0 + SCR_H, SCR_W / 2], [0.05, sy0 + SCR_H, -SCR_W / 2],
+        [0.05, sy0, -SCR_W / 2], [0.05, sy0, SCR_W / 2], MAT.screen));
+
+    /* a bright edge along the top of the lid, the way milled aluminium
+       catches light — only worth having once the lid is thin */
+    if (m > 0.15) {
+      f = f.concat(E.quad(
+        [0.06, y0 + outH, outW / 2], [0.06, y0 + outH, -outW / 2],
+        [-lidD, y0 + outH, -outW / 2], [-lidD, y0 + outH, outW / 2], MAT.chrome));
+    }
+    /* camera notch */
+    if (m > 0.35) {
+      f = f.concat(E.box([0.08, sy0 + SCR_H + bez * 0.5, 0], [0.1, Math.min(0.55, bez * 0.6), 2.2], MAT.lidFace));
+    }
+    lid.faces = f;
+
+    SCREEN_QUAD[0] = [0.06, sy0 + SCR_H, SCR_W / 2];    // top-left, seen from the front
+    SCREEN_QUAD[1] = [0.06, sy0 + SCR_H, -SCR_W / 2];   // top-right
+    SCREEN_QUAD[2] = [0.06, sy0, SCR_W / 2];            // bottom-left
+
+    /* ── base ── */
+    var cham = lerp(0, 0.55, m);         // chamfer along the front lip
+    var c = E.box([0, baseH / 2, 0], [23 - cham, baseH, 33], {
+      top: MAT.deck, bottom: MAT.lidFace, front: MAT.lidBack, back: MAT.lidBack,
+      left: MAT.lidBack, right: MAT.lidBack
+    });
+    if (cham > 0.02) {
+      var xf = (23 - cham) / 2;
+      c = c.concat(E.quad(
+        [xf, baseH, 16.5], [xf, baseH, -16.5],
+        [xf + cham, baseH - cham, -16.5], [xf + cham, baseH - cham, 16.5], MAT.chrome));
+    }
+    /* speaker grilles either side of the keyboard */
+    if (m > 0.3) {
+      var g = (m - 0.3) / 0.7;
+      for (var i = 0; i < 2; i++) {
+        var zz = (i ? 1 : -1) * 15.1;
+        c = c.concat(E.quad(
+          [-8.6, baseH + 0.02, zz + 0.7 * g], [-8.6, baseH + 0.02, zz - 0.7 * g],
+          [5.2, baseH + 0.02, zz - 0.7 * g], [5.2, baseH + 0.02, zz + 0.7 * g], MAT.grille));
+      }
+    }
+    chassis.faces = c;
+
+    /* shell tint */
+    for (var k in SHELL) {
+      var sp = SHELL[k], mat = MAT[k];
+      for (var ci = 0; ci < 3; ci++) {
+        mat.n[ci] = sp.a[ci] + (sp.b[ci] - sp.a[ci]) * m;
+        mat.d[ci] = sp.ad[ci] + (sp.bd[ci] - sp.ad[ci]) * m;
+      }
+    }
+  }
 
   /* keyboard: five rows of keys on the deck, each one hoppable */
   var KEYS = [];
@@ -164,20 +249,22 @@
       var gap = span / row.n;
       for (var j = 0; j < row.n; j++) {
         var z = start + gap * (j + 0.5);
-        var w = Math.min(row.w, gap - 0.35);
+        var w = Math.min(row.w, gap - 0.2);
         if (ri === 4) w = (j === 2) ? 9.5 : 3.0;
         if (ri === 4) z = [-11.5, -6.5, 0, 6.5, 11.5][j];
         var k = { x: row.x, z: z, w: w, d: row.d, ri: ri };
         /* every key carries its own material object so the backlight can
            tint them one at a time without cloning geometry */
         k.mat = { n: MAT.key.n.slice(), d: MAT.key.d.slice(), layer: 2 };
-        k.faces = E.box([row.x, 1.85, z], [row.d, 0.95, w], k.mat, { bottom: true });
+        k.faces = E.box([row.x, 1.78, z], [row.d, 0.78, w], k.mat, { bottom: true });
         KEYS.push(k);
         faces = faces.concat(k.faces);
       }
     });
     laptop.faces = laptop.faces.concat(faces);
   }());
+
+  buildShell(0);
 
   /* trackpad */
   laptop.faces = laptop.faces.concat(
@@ -816,6 +903,7 @@
       MAT.screen.d[ci] = SCREEN_ON.d[ci] + (SCREEN_OFF.d[ci] - SCREEN_ON.d[ci]) * (1 - sp);
     }
 
+    buildShell(state && state.modern !== undefined ? state.modern : 1);
     backlight(state);
 
     // light the key the robot just landed on
