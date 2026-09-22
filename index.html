@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="de" dir="ltr">
+<html lang="de" data-theme="night">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rheinland Digitalwerk — Digitalagentur für Marke, Web & Marketing</title>
 <meta name="description" content="Rheinland Digitalwerk entwickelt Markenauftritte, Websites, Onlineshops und Marketing für kleine und mittelständische Unternehmen — komplett aus einer Hand.">
-<meta name="theme-color" content="#00060F">
+<meta name="theme-color" content="#0C1526">
 <meta property="og:title" content="Rheinland Digitalwerk — Digitalagentur">
 <meta property="og:description" content="Markenauftritt, Website, Onlineshop und Marketing aus einer Hand.">
 <meta property="og:type" content="website">
@@ -13,9 +13,14 @@
 <link rel="apple-touch-icon" href="assets/img/logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  /* set the theme before first paint so there is no flash */
+  (function(){try{var t=localStorage.getItem('rdw-theme');
+    document.documentElement.setAttribute('data-theme', t==='day'?'day':'night');}catch(e){}}());
+</script>
 <link rel="stylesheet" href="assets/css/main.css">
-<link rel="stylesheet" href="assets/css/scene.css">
+<link rel="stylesheet" href="assets/css/hero.css">
 </head>
 <body>
 
@@ -39,10 +44,14 @@
     </nav>
 
     <div class="header-tools">
-      <button class="lang-toggle" id="langToggle" type="button" aria-label="Sprache wechseln / تغيير اللغة">
+      <button class="pill theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Zum Tagmodus wechseln">
+        <svg class="ico-night" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+        <svg class="ico-day" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      </button>
+      <button class="pill lang-toggle" id="langToggle" type="button" aria-label="Sprache wechseln / Switch language">
         <span class="lang-opt is-on" data-lang="de">DE</span>
         <span class="lang-sep" aria-hidden="true">/</span>
-        <span class="lang-opt" data-lang="ar">AR</span>
+        <span class="lang-opt" data-lang="en">EN</span>
       </button>
       <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="nav" aria-label="Menü öffnen">
         <span></span><span></span><span></span>
@@ -56,293 +65,42 @@
 
 <!-- ══════════════════════════ HERO + ROBOT SCENE ══════════════════════════ -->
 <section class="hero" id="hero">
-  <div class="hero-stage" id="heroStage">
+  <!-- 3D scene: the desk meets a wall at the left of the frame; the robot
+       walks in, plugs the cable into the socket and wakes the laptop. -->
+  <div class="hero-stage" id="heroStage" aria-hidden="true">
+    <canvas id="scene3d"></canvas>
+  </div>
 
-  <!-- ─────────── Cinematic scene: the little robot powers up the workshop ─────────── -->
-  <svg id="scene" class="scene" viewBox="0 0 1200 720" preserveAspectRatio="xMidYMid meet"
-       role="img" aria-labelledby="sceneTitle sceneDesc">
-    <title id="sceneTitle" data-i18n="scene.title">Ein kleiner Roboter steckt den Stecker ein und erweckt den Arbeitsplatz zum Leben.</title>
-    <desc id="sceneDesc" data-i18n="scene.desc">Animation: Ein kleiner Roboter läuft über einen dunklen Schreibtisch, zieht ein Kabel hinter sich her, steckt den Stecker in die Wandsteckdose. Ein Funke springt über, Energie fließt durch das Kabel, der Laptop startet. Anschließend springt der Roboter auf die Tastatur und schreibt hüpfend Code auf den Bildschirm.</desc>
+  <p class="visually-hidden" data-i18n="scene.desc">Animation: Ein kleiner Roboter läuft über einen dunklen Schreibtisch, zieht ein Kabel hinter sich her und steckt den Stecker in die Wandsteckdose. Ein Funke springt über, Energie fließt durch das Kabel, der Laptop startet. Anschließend springt der Roboter auf die Tastatur und schreibt hüpfend Code auf den Bildschirm.</p>
 
-    <defs>
-      <!-- background depth -->
-      <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"   stop-color="#00060F"/>
-        <stop offset=".55" stop-color="#000C22"/>
-        <stop offset="1"   stop-color="#00112F"/>
-      </linearGradient>
-      <linearGradient id="gDesk" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"   stop-color="#001334"/>
-        <stop offset=".35" stop-color="#000814"/>
-        <stop offset="1"   stop-color="#000308"/>
-      </linearGradient>
-      <linearGradient id="gScreen" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#012B57"/>
-        <stop offset="1" stop-color="#001430"/>
-      </linearGradient>
-      <linearGradient id="gDeck" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#0A1C3E"/>
-        <stop offset="1" stop-color="#030C1E"/>
-      </linearGradient>
-
-      <!-- soft light pools (cheap glow, no filters) -->
-      <radialGradient id="gLampPool" cx=".5" cy="0" r="1">
-        <stop offset="0"   stop-color="#00B2C0" stop-opacity=".40"/>
-        <stop offset=".45" stop-color="#00B2C0" stop-opacity=".10"/>
-        <stop offset="1"   stop-color="#00B2C0" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="gScreenPool" cx=".5" cy=".5" r=".5">
-        <stop offset="0"   stop-color="#2FE3F0" stop-opacity=".34"/>
-        <stop offset="1"   stop-color="#2FE3F0" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="gSparkPool" cx=".5" cy=".5" r=".5">
-        <stop offset="0"   stop-color="#FFB864" stop-opacity=".95"/>
-        <stop offset=".35" stop-color="#E4791E" stop-opacity=".45"/>
-        <stop offset="1"   stop-color="#E4791E" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="gVignette" cx=".5" cy=".46" r=".78">
-        <stop offset=".45" stop-color="#000000" stop-opacity="0"/>
-        <stop offset="1"   stop-color="#000000" stop-opacity=".85"/>
-      </radialGradient>
-      <linearGradient id="gCone" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0"   stop-color="#00B2C0" stop-opacity=".22"/>
-        <stop offset="1"   stop-color="#00B2C0" stop-opacity="0"/>
-      </linearGradient>
-
-      <!-- focused glows (used sparingly) -->
-      <filter id="fGlowS" x="-120%" y="-120%" width="340%" height="340%">
-        <feGaussianBlur stdDeviation="3" result="b"/>
-        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <filter id="fGlowM" x="-120%" y="-120%" width="340%" height="340%">
-        <feGaussianBlur stdDeviation="6" result="b"/>
-        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-
-      <clipPath id="clipScreen"><rect x="706" y="302" width="296" height="244" rx="4"/></clipPath>
-      <clipPath id="clipDeck"><path d="M706 552 H1002 L1032 600 H676 Z"/></clipPath>
-    </defs>
-
-    <!-- ░░ 1. deep background ░░ -->
-    <g id="layerBg">
-      <rect x="0" y="0" width="1200" height="600" fill="url(#gWall)"/>
-      <rect x="0" y="600" width="1200" height="120" fill="url(#gDesk)"/>
-    </g>
-
-    <!-- ░░ 2. far silhouettes — industrial depth, INSIDE-style ░░ -->
-    <g id="layerFar" fill="#000917">
-      <rect x="60"  y="150" width="118" height="330" rx="4" opacity=".75"/>
-      <rect x="990" y="96"  width="150" height="392" rx="4" opacity=".62"/>
-      <rect x="1014" y="120" width="102" height="14" rx="3" fill="#00121F" opacity=".8"/>
-      <rect x="1014" y="146" width="102" height="14" rx="3" fill="#00121F" opacity=".8"/>
-      <rect x="1014" y="172" width="102" height="14" rx="3" fill="#00121F" opacity=".8"/>
-      <!-- overhead pipe run -->
-      <rect x="0" y="74" width="1200" height="15" rx="7" opacity=".9"/>
-      <rect x="0" y="100" width="1200" height="9"  rx="4" opacity=".62"/>
-      <g opacity=".95">
-        <rect x="180" y="62" width="11" height="30" rx="3"/>
-        <rect x="520" y="62" width="11" height="30" rx="3"/>
-        <rect x="860" y="62" width="11" height="30" rx="3"/>
-      </g>
-      <!-- slack cables hanging from the ceiling -->
-      <g fill="none" stroke="#000917" stroke-width="3.4" opacity=".85">
-        <path d="M250 88 C 268 150 300 156 316 96"/>
-        <path d="M700 88 C 716 168 752 172 766 98"/>
-      </g>
-      <!-- distant shelving -->
-      <rect x="380" y="300" width="230" height="8" rx="3" opacity=".5"/>
-      <rect x="404" y="256" width="34" height="46" rx="3" opacity=".5"/>
-      <rect x="446" y="268" width="26" height="34" rx="3" opacity=".5"/>
-      <rect x="480" y="248" width="30" height="54" rx="3" opacity=".5"/>
-    </g>
-
-    <!-- ░░ 3. ceiling lamp + volumetric cone (powers on with the plug) ░░ -->
-    <g id="layerLight">
-      <g id="lampRig" fill="#00060F">
-        <rect x="596" y="86" width="8" height="70" rx="3"/>
-        <path d="M566 156 H634 L648 186 H552 Z"/>
-      </g>
-      <g id="lampGlow" opacity="0">
-        <ellipse cx="600" cy="186" rx="52" ry="13" fill="#7FF2FB" opacity=".9" filter="url(#fGlowM)"/>
-        <path id="lampCone" d="M556 188 L644 188 L800 604 L400 604 Z" fill="url(#gCone)"/>
-        <ellipse cx="600" cy="604" rx="230" ry="64" fill="url(#gLampPool)"/>
-      </g>
-    </g>
-
-    <!-- ░░ 4. wall socket ░░ -->
-    <g id="layerSocket">
-      <rect x="211" y="472" width="42" height="56" rx="7" fill="#00101F" stroke="#01244B" stroke-width="1.6"/>
-      <circle cx="232" cy="500" r="14" fill="#000710"/>
-      <g id="socketSlots" fill="#00304F">
-        <rect x="225.5" y="492" width="4.4" height="12" rx="2.2"/>
-        <rect x="234.1" y="492" width="4.4" height="12" rx="2.2"/>
-      </g>
-      <ellipse id="socketGlow" cx="232" cy="500" rx="54" ry="54" fill="url(#gSparkPool)" opacity="0"/>
-    </g>
-
-    <!-- ░░ 5. the desk edge — catches the rim light ░░ -->
-    <g id="layerDeskTop">
-      <rect x="0" y="598" width="1200" height="4" fill="#0A2A5E"/>
-      <rect id="deskRim" x="0" y="598.5" width="1200" height="1.8" fill="#2FE3F0" opacity="0"/>
-    </g>
-
-    <!-- ░░ 6. laptop ░░ -->
-    <g id="layerLaptop">
-      <!-- lid -->
-      <path d="M694 296 H1014 A6 6 0 0 1 1020 302 V552 H688 V302 A6 6 0 0 1 694 296 Z" fill="#00101F" stroke="#062A55" stroke-width="2"/>
-      <rect x="706" y="302" width="296" height="244" rx="4" fill="url(#gScreen)" opacity=".5" id="screenPanel"/>
-      <!-- screen contents live here -->
-      <g clip-path="url(#clipScreen)">
-        <rect id="screenOff" x="706" y="302" width="296" height="244" fill="#00080F"/>
-        <g id="screenOn" opacity="0">
-          <rect x="706" y="302" width="296" height="244" fill="#001126"/>
-          <!-- subtle scanlines -->
-          <g id="scanlines" opacity=".16" fill="#2FE3F0"></g>
-          <!-- boot mark -->
-          <g id="bootMark" opacity="0">
-            <text x="854" y="420" text-anchor="middle" font-family="Poppins, sans-serif" font-weight="700"
-                  font-size="24" fill="#2FE3F0" letter-spacing="1">RHEINLAND</text>
-            <text x="854" y="446" text-anchor="middle" font-family="Poppins, sans-serif" font-weight="700"
-                  font-size="16" fill="#E4791E" letter-spacing="5">DIGITALWERK</text>
-          </g>
-          <!-- code lines injected by JS -->
-          <g id="codeLines"></g>
-          <!-- CRT sweep -->
-          <rect id="crtSweep" x="706" y="302" width="296" height="52" fill="#7FF2FB" opacity="0"/>
-        </g>
-      </g>
-      <ellipse id="screenPool" cx="854" cy="424" rx="330" ry="250" fill="url(#gScreenPool)" opacity="0"/>
-      <!-- webcam dot -->
-      <circle cx="854" cy="299.5" r="1.8" fill="#062A55"/>
-      <!-- deck / keyboard base -->
-      <path d="M706 552 H1002 L1032 600 H676 Z" fill="url(#gDeck)" stroke="#062A55" stroke-width="1.6"/>
-      <g id="keyboard" clip-path="url(#clipDeck)"></g>
-      <path d="M676 600 H1032 L1030 606 H678 Z" fill="#00060F"/>
-    </g>
-
-    <!-- ░░ 7. power cable + energy pulse ░░ -->
-    <g id="layerCable" fill="none" stroke-linecap="round">
-      <path id="cableMain" d="M676 588 C 612 600 556 586 498 592 C 440 598 392 606 344 602" stroke="#000A16" stroke-width="5"/>
-      <path id="cableTail" d="M344 602 C 320 598 300 590 288 576" stroke="#000A16" stroke-width="5"/>
-      <path id="cablePulse" d="M676 588 C 612 600 556 586 498 592 C 440 598 392 606 344 602" stroke="#2FE3F0" stroke-width="3.4" opacity="0" filter="url(#fGlowS)"/>
-      <path id="cableLit"   d="M676 588 C 612 600 556 586 498 592 C 440 598 392 606 344 602" stroke="#0B6E8C" stroke-width="2" opacity="0"/>
-    </g>
-
-    <!-- ░░ 8. the plug the robot carries ░░ -->
-    <g id="plug">
-      <g id="plugBody">
-        <rect x="-11" y="-6" width="22" height="20" rx="5" fill="#001330" stroke="#0A3A6B" stroke-width="1.5"/>
-        <rect x="-6.4" y="-14" width="4" height="9" rx="2" fill="#0A3A6B"/>
-        <rect x="2.4"  y="-14" width="4" height="9" rx="2" fill="#0A3A6B"/>
-        <rect id="plugLed" x="-2.5" y="2" width="5" height="5" rx="2.5" fill="#E4791E" opacity=".35"/>
-      </g>
-    </g>
-
-    <!-- ░░ 9. THE ROBOT ░░ -->
-    <g id="robot">
-      <ellipse id="rbShadow" cx="0" cy="40" rx="30" ry="6" fill="#000000" opacity=".55"/>
-      <g id="rbBody">
-        <!-- back leg -->
-        <g id="rbLegB">
-          <rect x="-4" y="6" width="9" height="26" rx="4.5" fill="#00101F"/>
-          <ellipse cx="0" cy="35" rx="9" ry="5" fill="#000A16"/>
-        </g>
-        <!-- back arm -->
-        <g id="rbArmB">
-          <rect x="-4" y="-2" width="8" height="24" rx="4" fill="#00101F"/>
-          <circle cx="0" cy="24" r="5" fill="#000A16"/>
-        </g>
-
-        <!-- torso -->
-        <g id="rbTorso">
-          <rect x="-23" y="-31" width="46" height="41" rx="14" fill="#000D1B" stroke="#0A3A6B" stroke-width="1.8"/>
-          <rect x="-13" y="-25" width="26" height="17" rx="6" fill="#000710" stroke="#062A55" stroke-width="1.2"/>
-          <circle id="rbCore" cx="0" cy="-16.5" r="4.6" fill="#E4791E" opacity=".55"/>
-          <rect x="-16" y="-3" width="32" height="3" rx="1.5" fill="#062A55" opacity=".7"/>
-          <rect x="-11" y="3" width="22" height="2.4" rx="1.2" fill="#062A55" opacity=".5"/>
-        </g>
-
-        <!-- head -->
-        <g id="rbHead">
-          <g id="rbAntenna">
-            <rect x="-1.6" y="-31" width="3.2" height="16" rx="1.6" fill="#00101F"/>
-            <circle id="rbAntBall" cx="0" cy="-33" r="4.4" fill="#E4791E" opacity=".6"/>
-          </g>
-          <rect x="-26" y="-18" width="52" height="40" rx="17" fill="#000D1B" stroke="#0A3A6B" stroke-width="1.8"/>
-          <!-- side ear pods -->
-          <rect x="-31" y="-4" width="6" height="14" rx="3" fill="#00101F"/>
-          <rect x="25"  y="-4" width="6" height="14" rx="3" fill="#00101F"/>
-          <!-- visor -->
-          <rect x="-19" y="-9" width="38" height="22" rx="11" fill="#000308"/>
-          <g id="rbVisor">
-            <rect id="rbVisorGlass" x="-17" y="-7.4" width="34" height="18.8" rx="9.4" fill="#00B2C0" opacity=".28"/>
-            <g id="rbEyes" fill="#BFF7FD">
-              <rect id="rbEyeL" x="-10.5" y="-3.4" width="7" height="11" rx="3.5"/>
-              <rect id="rbEyeR" x="3.5"   y="-3.4" width="7" height="11" rx="3.5"/>
-            </g>
-          </g>
-        </g>
-
-        <!-- front arm (carries the plug) -->
-        <g id="rbArmF">
-          <rect x="-4" y="-2" width="8" height="24" rx="4" fill="#00131F"/>
-          <circle cx="0" cy="24" r="5.4" fill="#001730"/>
-        </g>
-        <!-- front leg -->
-        <g id="rbLegF">
-          <rect x="-4.5" y="6" width="9" height="26" rx="4.5" fill="#00131F"/>
-          <ellipse cx="0" cy="35" rx="9.5" ry="5.2" fill="#000D1B"/>
-        </g>
-      </g>
-      <ellipse id="rbHalo" cx="0" cy="-8" rx="62" ry="52" fill="url(#gScreenPool)" opacity="0"/>
-    </g>
-
-    <!-- ░░ 10. effects ░░ -->
-    <g id="layerFx">
-      <g id="spark" opacity="0">
-        <g stroke="#FFD9A6" stroke-width="2.6" stroke-linecap="round" fill="none" filter="url(#fGlowS)">
-          <path d="M232 500 L232 468"/><path d="M232 500 L262 482"/><path d="M232 500 L266 508"/>
-          <path d="M232 500 L256 526"/><path d="M232 500 L232 534"/><path d="M232 500 L206 526"/>
-          <path d="M232 500 L198 508"/><path d="M232 500 L200 484"/>
-        </g>
-        <circle cx="232" cy="500" r="13" fill="#FFF3DF" filter="url(#fGlowM)"/>
-      </g>
-      <rect id="flash" x="0" y="0" width="1200" height="720" fill="#BFE9FF" opacity="0"/>
-    </g>
-
-    <!-- ░░ 11. foreground grade ░░ -->
-    <rect id="vignette" x="0" y="0" width="1200" height="720" fill="url(#gVignette)" pointer-events="none"/>
-  </svg>
-
-  <canvas id="dust" class="dust" aria-hidden="true"></canvas>
-  </div><!-- /hero-stage -->
-
-  <div class="shell hero-copy">
-    <p class="eyebrow" data-i18n="hero.eyebrow"><span class="dot" aria-hidden="true"></span>Digitalagentur im Rheinland</p>
-    <h1 class="hero-title">
-      <span data-i18n="hero.title1">Wir stecken Ihr Unternehmen</span>
-      <span class="grad" data-i18n="hero.title2">ans Netz.</span>
-    </h1>
-    <p class="hero-lead" data-i18n="hero.lead">
-      Marke, Website, Onlineshop und Marketing — geplant, gestaltet und betreut aus einer Hand.
-      Sie führen Ihr Geschäft, wir übernehmen den digitalen Auftritt.
-    </p>
-    <div class="hero-actions">
-      <a class="btn btn-primary" href="#kontakt">
-        <span data-i18n="hero.cta1">Kostenloses Erstgespräch</span>
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" class="btn-arrow"><path d="M5 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
-      <a class="btn btn-ghost" href="#leistungen" data-i18n="hero.cta2">Leistungen ansehen</a>
+  <div class="shell hero-inner">
+    <div class="hero-copy is-right">
+      <p class="eyebrow" data-i18n="hero.eyebrow"><span class="dot" aria-hidden="true"></span>Digitalagentur im Rheinland</p>
+      <h1 class="hero-title">
+        <span data-i18n="hero.title1">Wir stecken Ihr Unternehmen</span>
+        <span class="soft" data-i18n="hero.title2">ans Netz.</span>
+      </h1>
+      <p class="hero-lead" data-i18n="hero.lead">
+        Marke, Website, Onlineshop und Marketing — geplant, gestaltet und betreut aus einer Hand.
+        Sie führen Ihr Geschäft, wir übernehmen den digitalen Auftritt.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#kontakt">
+          <span data-i18n="hero.cta1">Kostenloses Erstgespräch</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" class="btn-arrow"><path d="M5 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="#leistungen" data-i18n="hero.cta2">Leistungen ansehen</a>
+      </div>
+      <ul class="hero-badges">
+        <li data-i18n="hero.badge1">Feste Preise pro Projekt</li>
+        <li data-i18n="hero.badge2">Ein Ansprechpartner</li>
+        <li data-i18n="hero.badge3">Deutsch &amp; Englisch</li>
+      </ul>
     </div>
-    <ul class="hero-badges">
-      <li data-i18n="hero.badge1">Feste Preise pro Projekt</li>
-      <li data-i18n="hero.badge2">Ein Ansprechpartner</li>
-      <li data-i18n="hero.badge3">Deutsch &amp; Arabisch</li>
-    </ul>
   </div>
 
   <button class="scene-replay" id="sceneReplay" type="button">
-    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span data-i18n="scene.replay">Animation neu starten</span>
   </button>
 </section>
@@ -352,7 +110,7 @@
   <div class="shell strip-grid">
     <div><strong data-i18n="strip.1v">8</strong><span data-i18n="strip.1l">Kernleistungen</span></div>
     <div><strong data-i18n="strip.2v">1</strong><span data-i18n="strip.2l">Ansprechpartner für alles</span></div>
-    <div><strong data-i18n="strip.3v">2</strong><span data-i18n="strip.3l">Sprachen: DE &amp; AR</span></div>
+    <div><strong data-i18n="strip.3v">2</strong><span data-i18n="strip.3l">Sprachen: DE &amp; EN</span></div>
     <div><strong data-i18n="strip.4v">6</strong><span data-i18n="strip.4l">Schritte bis zur Abnahme</span></div>
   </div>
 </section>
@@ -594,7 +352,7 @@
       <li class="reveal" data-i18n="aud.3">Handwerksbetriebe</li>
       <li class="reveal" data-i18n="aud.4">Ärzte, Kanzleien, Berater und andere freie Berufe</li>
       <li class="reveal" data-i18n="aud.5">Gründer und junge Unternehmen</li>
-      <li class="reveal" data-i18n="aud.6">Deutsch- und arabischsprachige Unternehmer in Deutschland</li>
+      <li class="reveal" data-i18n="aud.6">Deutsch- und englischsprachige Unternehmer in Deutschland</li>
     </ul>
   </div>
 </section>
@@ -742,7 +500,10 @@
 </footer>
 
 <script src="assets/js/i18n.js"></script>
-<script src="assets/js/scene.js"></script>
+<script src="assets/js/engine3d.js"></script>
+<script src="assets/js/scene3d.js"></script>
+<script src="assets/js/anim3d.js"></script>
+<script src="assets/js/hero3d.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Hero stage — the 3D scene sits on the left, the headline on the right.
+   The left edge of the frame is a wall; the desk runs away to the right and
+   fades, which is where the copy goes.
+   ========================================================================== */
+
+.hero{ overflow:hidden; }
+
+.hero-stage{
+  position:absolute; inset:74px 0 0 0;
+  z-index:1;
+  pointer-events:none;
+}
+
+#scene3d{
+  display:block;
+  width:100%; height:100%;
+}
+
+/* keeps the headline legible over the artwork on wide screens */
+.hero-stage::after{
+  content:"";
+  position:absolute; inset:0;
+  background:linear-gradient(90deg,
+    transparent 0%, transparent 34%,
+    color-mix(in srgb, var(--bg) 55%, transparent) 50%,
+    color-mix(in srgb, var(--bg) 92%, transparent) 66%,
+    var(--bg) 80%);
+  pointer-events:none;
+}
+
+.scene-replay{
+  position:absolute; bottom:22px; inset-inline-start:var(--gut);
+  z-index:4;
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px; cursor:pointer;
+  background:var(--surface); border:1px solid var(--line);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  color:var(--ink-3); font-family:var(--f-body); font-size:12.4px; font-weight:500;
+  transition:color .3s var(--ease), border-color .3s var(--ease), opacity .3s;
+}
+.scene-replay:hover{ color:var(--accent); border-color:var(--line-2); }
+.scene-replay svg{ transition:transform .6s var(--ease); }
+.scene-replay:hover svg{ transform:rotate(-180deg); }
+.scene-replay.is-busy{ opacity:.4; pointer-events:none; }
+
+/* ── wide: copy floats over the right of the scene ───────────────────── */
+@media (min-width:901px){
+  .hero-copy{ grid-column:1; justify-self:end; }
+}
+
+/* ── narrow: the scene becomes a band under the copy ─────────────────── */
+@media (max-width:900px){
+  .hero{ padding-bottom:0; display:flex; flex-direction:column; }
+  .hero-inner{ min-height:0; order:1; }
+  .hero-stage{
+    position:relative; inset:auto; order:2;
+    width:100%; aspect-ratio:16/11; margin-top:4px;
+    -webkit-mask-image:linear-gradient(180deg,#000 84%,transparent 100%);
+            mask-image:linear-gradient(180deg,#000 84%,transparent 100%);
+  }
+  .hero-stage::after{
+    background:linear-gradient(180deg, transparent 60%, var(--bg) 100%);
+  }
+  .hero-copy{ max-width:none; padding-block:clamp(30px,7vw,58px) 4px; }
+  .scene-replay{ position:static; order:3; margin:10px var(--gut) 18px; align-self:flex-start; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .scene-replay{ display:none; }
+}

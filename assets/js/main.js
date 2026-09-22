@@ -1,6 +1,6 @@
 /* ==========================================================================
    Rheinland Digitalwerk — site behaviour
-   Language switch, navigation, scroll reveals, service icons, contact form.
+   Theme (night default), language (DE/EN), navigation, reveals, contact form.
    ========================================================================== */
 (function () {
   'use strict';
@@ -8,7 +8,7 @@
   var doc = document.documentElement;
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ── service + contact icons (inline so they inherit currentColor) ── */
+  /* ── inline icons (inherit currentColor) ─────────────────────────── */
 
   var ICONS = {
     pen:   '<path d="M4 20l4-1 10-10a2.8 2.8 0 0 0-4-4L4 15l-1 4z"/><path d="M13.5 6.5l4 4"/>',
@@ -17,7 +17,7 @@
     card:  '<rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10 6h4M9.5 10h5v5h-5z"/>',
     chat:  '<path d="M20 12a7.5 7.5 0 0 1-10.9 6.7L4 20l1.4-4.4A7.5 7.5 0 1 1 20 12z"/><path d="M9 11h6M9 14h3.5"/>',
     brand: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/>',
-    target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".4" fill="currentColor"/>',
+    target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/>',
     chart: '<path d="M4 19V7M10 19V4M16 19v-8M22 19H2"/>',
     mail:  '<rect x="2.6" y="5" width="18.8" height="14" rx="2.4"/><path d="M3.4 6.6L12 13l8.6-6.4"/>',
     phone: '<path d="M6.2 3.5h3l1.6 4-2 1.4a12.5 12.5 0 0 0 6.3 6.3l1.4-2 4 1.6v3a2 2 0 0 1-2.2 2A17.6 17.6 0 0 1 4.2 5.7a2 2 0 0 1 2-2.2z"/>',
@@ -32,63 +32,96 @@
       'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
   });
 
-  /* ── language ───────────────────────────────────────────────────── */
+  /* ── theme ────────────────────────────────────────────────────────
+     Night is the default. A stored choice always wins; if there is none
+     we stay on night rather than following the system, because the hero
+     was composed for it.
+     ─────────────────────────────────────────────────────────────────── */
 
-  var STORE = 'rdw-lang';
-  var current = 'de';
+  var THEME_KEY = 'rdw-theme';
+  var theme = 'night';
 
-  function applyLang(lang) {
-    var dict = (window.I18N || {})[lang];
+  function applyTheme(next, persist) {
+    theme = (next === 'day') ? 'day' : 'night';
+    doc.setAttribute('data-theme', theme);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'day' ? '#F7F9FC' : '#0C1526');
+    if (window.RDW_SYNC_THEME) window.RDW_SYNC_THEME();
+    updateThemeLabel();
+    if (persist) { try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* private mode */ } }
+  }
+
+  var themeBtn = document.getElementById('themeToggle');
+  function updateThemeLabel() {
+    if (!themeBtn) return;
+    var dict = (window.I18N || {})[lang] || {};
+    var label = theme === 'day' ? dict['theme.toNight'] : dict['theme.toDay'];
+    if (label) themeBtn.setAttribute('aria-label', label);
+    themeBtn.setAttribute('aria-pressed', theme === 'day' ? 'true' : 'false');
+  }
+
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function () {
+      applyTheme(theme === 'day' ? 'night' : 'day', true);
+    });
+  }
+
+  /* ── language ────────────────────────────────────────────────────── */
+
+  var LANG_KEY = 'rdw-lang';
+  var lang = 'de';
+
+  function applyLang(next, persist) {
+    var dict = (window.I18N || {})[next];
     if (!dict) return;
-    current = lang;
-
+    lang = next;
     doc.setAttribute('lang', lang);
-    doc.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
 
     Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (node) {
       var val = dict[node.getAttribute('data-i18n')];
       if (val === undefined) return;
-      // a handful of strings carry a link, so those go in as markup
-      if (val.indexOf('<a ') !== -1) node.innerHTML = val;
+      if (val.indexOf('<a ') !== -1) node.innerHTML = val;   // a few strings carry a link
       else node.textContent = val;
     });
-
-    // Arabic reads better a touch larger and looser
-    document.body.style.fontFamily = lang === 'ar'
-      ? '"Noto Kufi Arabic", "Segoe UI", Tahoma, sans-serif'
-      : '';
-    document.body.style.lineHeight = lang === 'ar' ? '1.85' : '';
 
     Array.prototype.forEach.call(document.querySelectorAll('.lang-opt'), function (o) {
       o.classList.toggle('is-on', o.getAttribute('data-lang') === lang);
     });
 
-    try { localStorage.setItem(STORE, lang); } catch (e) { /* private mode */ }
+    updateThemeLabel();
+    if (persist) { try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ } }
   }
 
-  var toggle = document.getElementById('langToggle');
-  if (toggle) {
-    toggle.addEventListener('click', function () {
-      applyLang(current === 'de' ? 'ar' : 'de');
+  var langBtn = document.getElementById('langToggle');
+  if (langBtn) {
+    langBtn.addEventListener('click', function () {
+      applyLang(lang === 'de' ? 'en' : 'de', true);
     });
   }
 
-  (function initLang() {
-    var saved = null;
-    try { saved = localStorage.getItem(STORE); } catch (e) { /* ignore */ }
-    if (!saved && (navigator.language || '').toLowerCase().indexOf('ar') === 0) saved = 'ar';
-    if (saved === 'ar') applyLang('ar');
+  (function init() {
+    var savedTheme = null, savedLang = null;
+    try {
+      savedTheme = localStorage.getItem(THEME_KEY);
+      savedLang = localStorage.getItem(LANG_KEY);
+    } catch (e) { /* ignore */ }
+
+    applyTheme(savedTheme === 'day' ? 'day' : 'night', false);
+
+    // German is the default: the agency and its clients are German. English
+    // is offered as a switch, not guessed from the browser.
+    applyLang(savedLang === 'en' ? 'en' : 'de', false);
   }());
 
-  /* ── header: shadow on scroll + mobile menu ─────────────────────── */
+  /* ── header ──────────────────────────────────────────────────────── */
 
   var header = document.getElementById('siteHeader');
   var burger = document.getElementById('burger');
   var nav = document.getElementById('nav');
 
-  var onScroll = function () {
-    if (header) header.classList.toggle('is-stuck', window.scrollY > 12);
-  };
+  function onScroll() {
+    if (header) header.classList.toggle('is-stuck', window.scrollY > 10);
+  }
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
@@ -103,15 +136,11 @@
       var open = nav.classList.toggle('is-open');
       burger.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-    nav.addEventListener('click', function (e) {
-      if (e.target.tagName === 'A') closeMenu();
-    });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeMenu();
-    });
+    nav.addEventListener('click', function (e) { if (e.target.tagName === 'A') closeMenu(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
   }
 
-  /* ── active section in the nav ──────────────────────────────────── */
+  /* ── active section ──────────────────────────────────────────────── */
 
   var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav a[href^="#"]'));
   var sections = navLinks
@@ -130,7 +159,7 @@
     sections.forEach(function (s) { spy.observe(s); });
   }
 
-  /* ── reveal on scroll ───────────────────────────────────────────── */
+  /* ── reveal on scroll ────────────────────────────────────────────── */
 
   var reveals = document.querySelectorAll('.reveal');
   if (reduced || !('IntersectionObserver' in window)) {
@@ -140,48 +169,34 @@
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
         var idx = Array.prototype.indexOf.call(en.target.parentNode.children, en.target);
-        en.target.style.transitionDelay = Math.min(idx, 6) * 55 + 'ms';
+        en.target.style.transitionDelay = Math.min(idx, 6) * 60 + 'ms';
         en.target.classList.add('is-in');
         ro.unobserve(en.target);
       });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: .12 });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: .1 });
     Array.prototype.forEach.call(reveals, function (r) { ro.observe(r); });
   }
 
-  /* ── cards follow the pointer for the glow highlight ────────────── */
-
-  if (!reduced && window.matchMedia('(hover: hover)').matches) {
-    Array.prototype.forEach.call(document.querySelectorAll('.card'), function (card) {
-      card.addEventListener('pointermove', function (e) {
-        var r = card.getBoundingClientRect();
-        card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
-        card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
-      });
-    });
-  }
-
-  /* ── package buttons preselect the matching topic ───────────────── */
+  /* ── package buttons prefill the form ────────────────────────────── */
 
   var topicSelect = document.getElementById('topicSelect');
   Array.prototype.forEach.call(document.querySelectorAll('[data-pkg]'), function (btn) {
     btn.addEventListener('click', function () {
-      if (!topicSelect) return;
-      topicSelect.selectedIndex = topicSelect.options.length - 1; // "Komplettpaket / Gründung"
+      if (topicSelect) topicSelect.selectedIndex = topicSelect.options.length - 1;
       var name = btn.getAttribute('data-pkg');
       var msg = document.querySelector('#contactForm [name="message"]');
       if (msg && !msg.value) {
-        msg.value = current === 'ar'
-          ? 'مرحباً، يهمني عرض سعر لباقة «' + name + '».\n\n'
+        msg.value = lang === 'en'
+          ? 'Hello, I am interested in the "' + name + '" package.\n\n'
           : 'Guten Tag, ich interessiere mich für das Paket "' + name + '".\n\n';
       }
     });
   });
 
-  /* ── contact form ───────────────────────────────────────────────────
-     There is no backend yet, so the form composes a complete, well
-     formatted e-mail and hands it to the visitor's mail client. Swap the
-     submit handler for a POST to a form endpoint (Formspree, Netlify
-     Forms, a small PHP script …) once hosting is decided.
+  /* ── contact form ────────────────────────────────────────────────────
+     No backend yet: the form composes a complete message and hands it to
+     the visitor's mail client. Replace this submit handler with a POST to
+     a form endpoint once hosting is decided.
      ──────────────────────────────────────────────────────────────────── */
 
   var TARGET_MAIL = 'info@rheinland-digitalwerk.de';
@@ -191,41 +206,31 @@
   if (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var dict = (window.I18N || {})[current] || {};
+      var dict = (window.I18N || {})[lang] || {};
 
       if (!form.checkValidity()) {
         form.reportValidity();
-        if (status) {
-          status.textContent = dict['ct.err'] || '';
-          status.className = 'form-status err';
-        }
+        if (status) { status.textContent = dict['ct.err'] || ''; status.className = 'form-status err'; }
         return;
       }
 
       var d = new FormData(form);
       var g = function (k) { return (d.get(k) || '').toString().trim(); };
 
-      var subject = 'Anfrage über die Website — ' + (g('name') || 'ohne Namen');
+      var subject = (lang === 'en' ? 'Website enquiry — ' : 'Anfrage über die Website — ') + (g('name') || '—');
       var body =
-        'Name:        ' + g('name') + '\n' +
-        'Unternehmen: ' + g('company') + '\n' +
-        'E-Mail:      ' + g('email') + '\n' +
-        'Telefon:     ' + g('phone') + '\n' +
-        'Thema:       ' + g('topic') + '\n' +
-        '\n' + g('message') + '\n';
+        'Name:     ' + g('name') + '\n' +
+        'Company:  ' + g('company') + '\n' +
+        'Email:    ' + g('email') + '\n' +
+        'Phone:    ' + g('phone') + '\n' +
+        'Topic:    ' + g('topic') + '\n\n' + g('message') + '\n';
 
       window.location.href = 'mailto:' + TARGET_MAIL +
-        '?subject=' + encodeURIComponent(subject) +
-        '&body=' + encodeURIComponent(body);
+        '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 
-      if (status) {
-        status.textContent = dict['ct.ok'] || '';
-        status.className = 'form-status ok';
-      }
+      if (status) { status.textContent = dict['ct.ok'] || ''; status.className = 'form-status ok'; }
     });
   }
-
-  /* ── footer year ────────────────────────────────────────────────── */
 
   var year = document.getElementById('year');
   if (year) year.textContent = new Date().getFullYear();
