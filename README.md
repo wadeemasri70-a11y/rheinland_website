@@ -66,6 +66,9 @@ erweitert:
   Schleife ergibt sich aus `T.loop`; die Phasen nach dem letzten Sprung
   (`tireTo`, `flopTo`, `restTo`, `fadeTo`) hängen aneinander, sodass eine
   Änderung am Hüpfen den Rest automatisch nachzieht.
+- **Der Stecker** liegt zu Beginn auf dem Tisch unter der Steckdose
+  (`PLUG_REST`). Der Roboter kommt mit leeren Händen, beugt sich darüber,
+  hebt ihn auf und greift damit nach oben.
 - **Auf welche Tasten der Roboter springt** bestimmt `HOP_KEYS`; pro Sprung
   wird eine Zeile aus `CODE` getippt.
 - **Die Form eines Sprungs** steckt in `AP` und `FLIGHT`: erst hockt sich der
@@ -106,6 +109,11 @@ gedämpften Feder bewegt, die auf die vertikale Beschleunigung des Körpers
 reagiert — sie eilt dem Körper nach und schwingt bei jeder Landung aus. Und
 die Arme schwingen um eine knappe halbe Phase versetzt zu den Beinen; ohne
 diesen Versatz wirkt der Gang mechanisch.
+
+Nachdem der Roboter umgekippt ist, steigt eine dünne Rauchfahne von ihm auf
+(`smokePass()` in `scene3d.js`). Die Schwaden entstehen am Körper, steigen im
+Weltraum auf und werden pro Bild projiziert — sie stehen also in der Szene
+und schweben nicht flach darüber.
 
 Bei `prefers-reduced-motion: reduce` wird statt der Animation das fertige,
 beleuchtete Schlussbild gezeigt. Läuft die Szene aus dem Sichtfeld, pausiert
@@ -157,6 +165,14 @@ Bildschirm wird flau und bekommt einen roten Schimmer, die Tastatur reagiert
 nicht mehr, und das Formular lässt sich nicht absenden. Ein Klick auf den
 Stecker oder auf „Stecker einstecken“ stellt alles wieder her.
 
+Die Leitung wird in geraden Strecken mit festen Winkeln gezeichnet, nicht
+als lose Kurve: ein kurzes Stück aus dem Stecker heraus, eine Diagonale von
+genau 45 Grad, dann waagerecht in das Gerät. Das greift den Aufbau des Logos
+auf, das aus denselben Winkeln besteht, und wirkt gelegt statt fallen
+gelassen. Damit die Diagonale wirklich 45 Grad misst und nicht mit der
+Breite verzerrt, bekommt das SVG bei jeder Neuberechnung eine viewBox in
+seiner eigenen Pixelgröße.
+
 Der Stecker folgt beim Ziehen dem Zeiger, und das Kabel gibt mit ihm nach —
 seitlich gedämpft und nach unten begrenzt, damit er an seiner Leitung bleibt.
 Beim Loslassen entscheidet die zurückgelegte Strecke: knapp gezogen rutscht
@@ -200,31 +216,32 @@ nur für die direkten Kinder.
 
 ## Bilder
 
-Fünf Aufnahmen, alle als WebP mit zusammen rund 340 KB (aus gut 4 MB
-Ausgangsmaterial):
+Fünf Aufnahmen, alle quadratisch, damit sie als ein Satz gelesen werden:
 
 | Datei | Platz |
 |---|---|
-| `brand-wall.webp` | Markenband direkt unter dem Hero |
-| `team-workshop.webp` | über den sechs Schritten |
-| `team-desks.webp` | über dem Portfolio |
+| `brand-wall.webp` | neben der Überschrift der Leistungen |
+| `team-workshop.webp` | neben der Überschrift der Arbeitsweise |
+| `team-desks.webp` | neben der Überschrift des Portfolios |
 | `team-meeting.webp` | neben den Zielgruppen |
 | `team-advice.webp` | im Buchhaltungsbereich |
 
-Jedes Bild sitzt in einem Rahmen, der es beschneidet, und ist etwas größer
-als dieser Rahmen — dadurch kann es beim Scrollen wandern. Die Verschiebung
-schreibt ein einziger Scroll-Handler über eine rAF-Schleife in die
-Eigenschaft `--py`; gemessen wird nur beim Laden und beim Größenwechsel,
-nie während des Schreibens. Der Weg ist begrenzt, damit das Bild nie über
-seinen Rahmen hinausrutscht. Sichtbar wird ein Bild über einen Schnitt am
-Rahmen statt über eine Blende.
+Beschnitten wird auf das größte echte Quadrat der Vorlage; hochgerechnet
+wird nichts, weil das keine Schärfe zurückbringt. Zwei der Vorlagen sind
+1013 × 672 groß und liefern deshalb nur 672 × 672 — sichtbar wird das erst
+auf sehr hochauflösenden Bildschirmen.
 
-Im Nachtmodus werden die Aufnahmen abgedunkelt und leicht entsättigt. Es
-sind Tageslichtbilder; ungefiltert säßen sie sichtbar in einem anderen Raum
-als der Rest der Seite.
+Die Aufnahme mit dem Wandlogo bekommt beim Export einen Rand aus ihrer
+eigenen Wandfarbe. Ohne den schnitt der Rahmen den Schriftzug an, weil das
+Bild für die Parallaxe etwas größer skaliert wird als sein Rahmen.
 
-Die Alternativtexte hängen wie die Beschriftungen an den Sprachdateien
-(`data-i18n-alt`).
+Jedes Bild sitzt in einem Rahmen, der es beschneidet. Ein einziger
+Scroll-Handler speist eine rAF-Schleife und schreibt die Verschiebung in
+`--py`; gemessen wird nur beim Laden und beim Größenwechsel. Sichtbar wird
+ein Bild über einen Schnitt am Rahmen statt über eine Blende. Im Nachtmodus
+werden die Tageslichtaufnahmen abgedunkelt und leicht entsättigt.
+
+Die Alternativtexte hängen an den Sprachdateien (`data-i18n-alt`).
 
 ## Themes
 

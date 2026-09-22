@@ -523,27 +523,53 @@
     var powerBox = document.querySelector('.machine-power');
     var spark = document.querySelector('.ms-spark');
 
-    var CABLE_HOME = [283, 20, 250, 52];       // start point and first control
-    var PULL_OUT = 30;                         // px before it comes loose
+    /* The lead is drawn in straight runs at fixed angles rather than as a
+       loose curve: out of the plug, a 45-degree diagonal, then straight
+       into the machine. It echoes the logo, which is built the same way,
+       and it looks placed rather than dropped. The viewBox is kept at the
+       element's own pixel size so the diagonal really is 45 degrees and
+       does not skew with the width. */
+
+    var cableSvg = document.querySelector('.machine-cable');
+    var STUB = 14;          // straight bit leaving the plug
+    var PULL_OUT = 30;      // px of travel before the plug comes loose
+
+    function cableGeom() {
+      var box = powerBox ? powerBox.getBoundingClientRect() : null;
+      if (!box || !box.width) return null;
+      var plug = plugBtn ? plugBtn.getBoundingClientRect() : null;
+      if (!plug) return null;
+      return {
+        w: box.width, h: box.height,
+        px: plug.left - box.left + plug.width / 2,   // the plug's cable exit
+        py: plug.top - box.top + plug.height,
+        ax: 8, ay: box.height - 6                    // where it meets the machine
+      };
+    }
 
     function cablePath(dx, dy) {
-      var r = powerBox ? powerBox.getBoundingClientRect() : null;
-      var kx = r && r.width ? 300 / r.width : 1;
-      var ky = r && r.height ? 62 / r.height : 1;
-      var x0 = CABLE_HOME[0] + dx * kx;
-      var y0 = CABLE_HOME[1] + dy * ky;
-      var cx = CABLE_HOME[2] + dx * kx * 0.55;
-      var cy = CABLE_HOME[3] + dy * ky * 0.75;
-      return 'M' + x0.toFixed(1) + ' ' + y0.toFixed(1) +
-             ' C ' + cx.toFixed(1) + ' ' + cy.toFixed(1) +
-             ', 196 30, 140 44 C 84 58, 44 44, 8 60';
+      var g = cableGeom();
+      if (!g) return '';
+      if (cableSvg) cableSvg.setAttribute('viewBox', '0 0 ' + Math.round(g.w) + ' ' + Math.round(g.h));
+
+      var px = g.px + dx, py = g.py + dy;
+      var stubY = py + STUB;
+      var run = Math.max(6, g.ay - stubY);           // 45 degrees: run equals rise
+      var cornerX = Math.max(g.ax + 6, px - run);
+
+      return 'M' + px.toFixed(1) + ' ' + py.toFixed(1) +
+             ' V' + stubY.toFixed(1) +
+             ' L' + cornerX.toFixed(1) + ' ' + g.ay.toFixed(1) +
+             ' H' + g.ax;
     }
 
     function setCable(dx, dy) {
-      var d = (dx === null) ? '' : cablePath(dx, dy);
-      if (cableW) { if (d) cableW.setAttribute('d', d); else cableW.removeAttribute('style'); }
-      if (cableL && d) cableL.setAttribute('d', d);
+      var d = cablePath(dx || 0, dy || 0);
+      if (!d) return;
+      if (cableW) cableW.setAttribute('d', d);
+      if (cableL) cableL.setAttribute('d', d);
     }
+    window.RDW_CABLE = setCable;
 
     if (plugBtn) {
       var dragging = false, sx = 0, sy = 0, dx = 0, dy = 0;
@@ -552,8 +578,8 @@
         dragging = false;
         plugBtn.classList.remove('is-dragging');
         plugBtn.style.transform = '';
-        if (cableW) cableW.removeAttribute('d');
-        if (cableL) cableL.removeAttribute('d');
+        // let the class-driven rest position settle, then redraw to match
+        setTimeout(function () { setCable(0, 0); }, 460);
       }
 
       plugBtn.addEventListener('pointerdown', function (e) {
@@ -584,6 +610,7 @@
         endDrag();
         if (pulled > PULL_OUT) {
           setPlugged(false);
+          setTimeout(function () { setCable(0, 0); }, 460);
           if (spark && !reduced) {
             spark.classList.remove('is-lit');
             void spark.offsetWidth;                        // restart the flash
@@ -602,12 +629,18 @@
     if (fixBtn) {
       fixBtn.addEventListener('click', function () {
         setPlugged(true);
+    setCable(0, 0);
+    window.addEventListener('resize', function () { setCable(0, 0); }, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setCable(0, 0); });
         var first = form && form.querySelector('input, textarea');
         if (first) first.focus();
       });
     }
 
     setPlugged(true);
+    setCable(0, 0);
+    window.addEventListener('resize', function () { setCable(0, 0); }, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setCable(0, 0); });
 
     /* ── confirmation on the screen ──────────────────────────────────── */
 

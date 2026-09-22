@@ -758,6 +758,54 @@
     ctx.restore();
   }
 
+  /* ── smoke ───────────────────────────────────────────────────────────
+     A thin wisp off the robot after it collapses. Puffs are born at the
+     body, rise in world space and are projected each frame, so they sit in
+     the scene rather than floating flatly over it. */
+
+  var puffs = [];
+
+  function smokePass(ctx, state) {
+    var amt = state && state.smoke ? state.smoke : 0;
+    if (amt <= 0.01) { if (puffs.length) puffs.length = 0; return; }
+    var at = state.smokeAt || [0, 0, 0];
+    var dt = Math.min(48, (state && state.dt) || 16.7);
+
+    if (puffs.length < 16 && Math.random() < 0.05 * dt * amt) {
+      puffs.push({
+        p: [at[0] + (Math.random() - 0.5) * 1.6, at[1], at[2] + (Math.random() - 0.5) * 1.6],
+        v: [(Math.random() - 0.5) * 0.004, 0.011 + Math.random() * 0.008, (Math.random() - 0.5) * 0.003],
+        age: 0, life: 2200 + Math.random() * 1400, r: 0.7 + Math.random() * 0.7
+      });
+    }
+
+    ctx.save();
+    for (var i = puffs.length - 1; i >= 0; i--) {
+      var q = puffs[i];
+      q.age += dt;
+      if (q.age > q.life) { puffs.splice(i, 1); continue; }
+      q.p[0] += q.v[0] * dt; q.p[1] += q.v[1] * dt; q.p[2] += q.v[2] * dt;
+
+      var k = q.age / q.life;
+      var sp = proj(q.p);
+      if (!sp) continue;
+      var e = proj([q.p[0] + q.r * (1 + k * 2.6), q.p[1], q.p[2]]);
+      if (!e) continue;
+      var rad = Math.max(3, Math.abs(e.x - sp.x) * 3);
+      // fades in quickly, then thins out as it climbs
+      var a = Math.sin(Math.min(1, k * 3.2) * Math.PI * 0.5) * (1 - k) * 0.30 * amt;
+      if (a < 0.004) continue;
+      var tint = theme === 'night' ? '150,180,205' : '120,128,140';
+      var g = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, rad);
+      g.addColorStop(0, 'rgba(' + tint + ',' + a.toFixed(3) + ')');
+      g.addColorStop(0.55, 'rgba(' + tint + ',' + (a * 0.4).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(' + tint + ',0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, rad, 0, 6.2832); ctx.fill();
+    }
+    ctx.restore();
+  }
+
   /* ── dust ────────────────────────────────────────────────────────────
      Slow motes drifting through the light. Night only: in the day theme
      they read as dirt on the screen rather than atmosphere. Positions are
@@ -944,6 +992,7 @@
       ctx.fillRect(0, 0, w, h);
       ctx.restore();
     }
+    smokePass(ctx, state || {});
     atmosphere(ctx, w, h);
     dustPass(ctx, w, h, (state && state.dt) || 16.67,
              state ? (state.cableLit || 0) : 1);

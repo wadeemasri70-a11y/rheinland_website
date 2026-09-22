@@ -7,39 +7,6 @@
    the frame so the picture wipes in rather than fading.
    ========================================================================== */
 
-/* ── the wall logo, straight under the hero ──────────────────────────── */
-
-.brandband{
-  position:relative;
-  width:100%;
-  overflow:hidden;
-  background:var(--bg-2);
-  border-block:1px solid var(--line);
-}
-.brandband-media{
-  position:relative;
-  height:clamp(330px, 46vw, 620px);
-  overflow:hidden;
-}
-.brandband-media img{
-  position:absolute; inset:-12% 0;
-  width:100%; height:124%;
-  object-fit:cover;
-  object-position:46% 30%;     /* keeps the whole sign in frame as the band crops */
-  transform:translate3d(0, var(--py, 0px), 0);
-  will-change:transform;
-}
-/* the band blends into the page instead of sitting there as a hard slab */
-.brandband::after{
-  content:""; position:absolute; inset:0; pointer-events:none;
-  background:
-    linear-gradient(180deg, var(--bg-2) 0%, transparent 16%, transparent 84%, var(--bg-2) 100%),
-    linear-gradient(90deg, var(--bg-2) 0%, transparent 12%, transparent 88%, var(--bg-2) 100%);
-}
-/* at night the photographs are daylight shots — knock them back so they
-   sit in the same room as the rest of the page */
-:root[data-theme="night"] .brandband-media img{ filter:brightness(.72) saturate(.85) contrast(1.02); }
-
 /* ── section figures ─────────────────────────────────────────────────── */
 
 .shot{ margin:0 0 clamp(30px,4vw,48px); }
@@ -48,21 +15,31 @@
   border-radius:var(--r-lg);
   border:1px solid var(--line);
   background:var(--bg-3);
-  aspect-ratio:16/9;
+  aspect-ratio:1/1;
   clip-path:inset(0 round var(--r-lg));
 }
 .shot-frame img{
-  position:absolute; inset:-9% 0;
-  width:100%; height:118%;
+  position:absolute; inset:0;
+  width:100%; height:100%;
   object-fit:cover;
-  transform:translate3d(0, var(--py, 0px), 0);
+  transform:scale(1.07) translate3d(0, var(--py, 0px), 0);
   will-change:transform;
 }
 :root[data-theme="night"] .shot-frame img{ filter:brightness(.74) saturate(.86); }
 
-.shot-wide{ aspect-ratio:auto; }
-.shot-wide .shot-frame{ aspect-ratio:21/9; }
-.shot-tall .shot-frame{ aspect-ratio:4/3; }
+/* every photograph is square, so the set reads as one family */
+.shot-square .shot-frame{ aspect-ratio:1/1; }
+
+/* a section heading with its picture beside it */
+.sec-split{
+  display:grid;
+  grid-template-columns:1fr minmax(260px, 380px);
+  gap:clamp(28px,4vw,64px);
+  align-items:center;
+  margin-bottom:clamp(32px,4vw,52px);
+}
+.sec-split .sec-head{ margin-bottom:0; }
+.sec-split .shot{ margin:0; }
 
 /* the reveal: the frame opens from the bottom while the picture settles */
 .shot.reveal{ opacity:1; transform:none; }
@@ -70,25 +47,26 @@
   clip-path:inset(18% 0 0 0 round var(--r-lg));
   transition:clip-path 1.05s var(--ease);
 }
-.shot.reveal .shot-frame img{ transition:scale 1.2s var(--ease); scale:1.07; }
+.shot.reveal .shot-frame img{ transition:transform 1.2s var(--ease); }
 .shot.reveal.is-in .shot-frame{ clip-path:inset(0 0 0 0 round var(--r-lg)); }
-.shot.reveal.is-in .shot-frame img{ scale:1; }
+
 
 /* audience: the picture sits above the list, both in the second column */
 .aud-side{ display:grid; gap:18px; align-content:start; }
-.aud-side .shot-tall{ margin:0; }
+/* keep every photograph at roughly the same size across the page */
+.aud-side .shot, .acc-side .shot{ margin:0; max-width:400px; }
 
 /* bookkeeping: picture over the responsibility note */
 .acc-side{ display:grid; gap:18px; }
 
-@media (max-width:900px){
-  .shot-wide .shot-frame{ aspect-ratio:16/10; }
-  .brandband-media{ height:clamp(200px, 56vw, 400px); }
+@media (max-width:1040px){
+  .sec-split{ grid-template-columns:1fr; gap:26px; }
+  /* on one column the picture would otherwise tower over the text */
+  .sec-split .shot{ max-width:420px; }
 }
 
 @media (prefers-reduced-motion:reduce){
-  .brandband-media img,
   .shot-frame img{ transform:none !important; }
   .shot.reveal .shot-frame{ clip-path:inset(0 round var(--r-lg)); transition:none; }
-  .shot.reveal .shot-frame img{ scale:1; transition:none; }
+  .shot.reveal .shot-frame img{ transition:none; }
 }

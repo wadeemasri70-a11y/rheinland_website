@@ -75,21 +75,21 @@
 
   var T = {
     walkFrom:  600,
-    walkTo:   2900,    // reaches the plug lying on the desk
-    grab:     3280,    // hand closes on it
-    pickTo:   4000,    // back upright, plug in hand
-    carryTo:  6000,    // carries it to the socket
-    reach:    6700,
-    contact:  7300,
-    pulseFrom:7400,
-    pulseTo:  9200,
-    boot:     9100,
-    mark:     9800,
-    markOut: 11200,
-    turn:    11000,
-    runTo:   13100,
-    climbTo: 14100,
-    hopFrom: 14250,
+    walkTo:   4000,    // reaches the plug lying under the socket
+    grab:     4420,    // hand closes on it
+    pickTo:   5150,    // back upright, plug in hand
+    carryTo:  5500,    // a half step across to the socket
+    reach:    6150,
+    contact:  6750,
+    pulseFrom:6850,
+    pulseTo:  8650,
+    boot:     8550,
+    mark:     9250,
+    markOut: 10650,
+    turn:    10450,
+    runTo:   12550,
+    climbTo: 13550,
+    hopFrom: 13700,
     hopEvery:  880
   };
 
@@ -124,11 +124,11 @@
   var WALK_FROM = 118, SOCKET_X = 15;
   var SOCK = S.SOCKET;
 
-  /* The plug starts on the desk beside the laptop. The robot walks in with
-     empty hands, crouches over it, picks it up and carries it to the wall —
-     which reads far better than having it arrive holding the thing. */
-  var PLUG_REST = [56, 1.8, 1];
-  var PICK_X = PLUG_REST[0] + 6.5;     // where the robot stands to reach it
+  /* The plug lies on the desk directly beneath the wall socket, where a
+     dropped lead would actually end up. The robot walks in with empty
+     hands, crouches over it, picks it up and reaches straight up with it. */
+  var PLUG_REST = [SOCK[0] + 5, 1.8, SOCK[2] + 1];
+  var PICK_X = PLUG_REST[0] + 9;       // where the robot stands to reach it
 
   /* ── springy antenna ─────────────────────────────────────────────────
      A one-dimensional damped spring driven by the body's vertical
@@ -486,6 +486,12 @@
        It boots as a plain grey box; once the robot starts writing code the
        keyboard lighting comes up. The ramp is slow on purpose so it reads
        as the machine waking up rather than as a light switch. */
+    /* a thin wisp rises off the robot once it has keeled over */
+    st.smoke = (t > T.flopTo)
+      ? clamp01((t - T.flopTo) / 900) * clamp01((T.fadeTo - t) / 1200)
+      : 0;
+    st.smokeAt = E.xform(rig.body.world, [0, 6.6, 0]);
+
     /* the chassis modernises slightly ahead of the lighting, so the shape
        changes first and the backlight arrives as the finishing touch */
     st.modern = clamp01((t - T.hopFrom + 900) / 2200);
