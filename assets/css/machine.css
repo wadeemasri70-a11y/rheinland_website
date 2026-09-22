@@ -50,7 +50,7 @@
   padding:2px 8px 12px;
 }
 .machine-bezel img{ width:132px; height:auto; opacity:.95; }
-:root[data-theme="night"] .machine-bezel img{ filter:brightness(0) invert(1) opacity(.9); }
+:root[data-theme="night"] .machine-bezel img{ content:url("../img/logo-full-night.png"); }
 
 .machine-led{
   width:8px; height:8px; border-radius:50%;
@@ -195,14 +195,17 @@
 .pl-collar{ fill:var(--line-2); opacity:.85; }
 .machine-plug:hover .pl-body{ stroke:var(--accent); }
 
-/* a small nudge every so often so the plug reads as something you can grab */
-.machine:not(.is-unplugged) .machine-plug{ animation:plugHint 7s ease-in-out 3s infinite; }
+/* A reminder every so often that the plug can be grabbed. It pulses rather
+   than moves: the lead is a drawn path, and a nudge would open a gap at
+   the joint where the cable leaves the plug. */
+.machine:not(.is-unplugged) .machine-plug .pl-body{ animation:plugHint 7s ease-in-out 3s infinite; }
 @keyframes plugHint{
-  0%,88%,100%{ transform:translate(0,0); }
-  92%{ transform:translate(0,2.5px); }
-  96%{ transform:translate(0,.8px); }
+  0%,86%,100%{ stroke:var(--line-2); }
+  91%{ stroke:var(--accent); }
+  96%{ stroke:color-mix(in srgb, var(--accent) 45%, var(--line-2)); }
 }
-.machine-plug.is-dragging{ animation:none !important; transition:none; }
+.machine-plug.is-dragging{ transition:none; }
+.machine-plug.is-dragging .pl-body{ animation:none !important; }
 
 /* pulled out: the plug hangs square under the socket */
 .machine.is-unplugged .machine-plug{ transform:translate(0, 44px); animation:none; }
@@ -224,6 +227,9 @@
 .machine-socket{ position:absolute; }
 
 .mc-wire, .mc-live{ transition:d .42s var(--ease); stroke-linejoin:round; stroke-linecap:round; }
+/* while JS redraws the lead every frame its own easing would only lag */
+.machine-cable.is-tracking .mc-wire,
+.machine-cable.is-tracking .mc-live{ transition:none; }
 .machine.is-unplugged .mc-live{ opacity:0 !important; animation:none !important; }
 
 /* ── fault banner, deliberately above the box ────────────────────────── */
@@ -307,7 +313,7 @@
 
 @media (prefers-reduced-motion:reduce){
   .machine-alert, .machine-done{ animation:none; }
-  .machine:not(.is-unplugged) .machine-plug{ animation:none; }
+  .machine:not(.is-unplugged) .machine-plug .pl-body{ animation:none; }
   .ms-spark.is-lit{ animation:none; }
   .md-check svg path{ animation:none; stroke-dashoffset:0; }
   .ma-led{ animation:none; }

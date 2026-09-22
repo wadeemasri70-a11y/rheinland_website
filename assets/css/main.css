@@ -123,12 +123,14 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 .brand{ display:flex; align-items:center; text-decoration:none; flex:0 0 auto; }
 .brand-full{ width:182px; height:auto; }
 .brand-mark{ display:none; width:36px; height:36px; }
-/* the wordmark is dark navy artwork — lift it out of a dark background */
+/* The wordmark is dark navy artwork, so on a dark background it has to be
+   lifted. A white-out filter did that, but it flattened the orange too —
+   and the orange is the same #E4791E as the initials in the headline. So
+   night mode swaps in a recoloured copy instead: navy becomes light ink,
+   the cyan becomes the night accent, the orange stays exactly as it is. */
 :root[data-theme="night"] .brand-full,
-:root[data-theme="night"] .footer-brand img{ filter:brightness(0) invert(1) opacity(.92); }
-:root[data-theme="night"] .brand-mark{
-  background:#fff; border-radius:9px; padding:3px; box-sizing:content-box;
-}
+:root[data-theme="night"] .footer-brand img{ content:url("../img/logo-full-night.png"); }
+:root[data-theme="night"] .brand-mark{ content:url("../img/logo-mark-night.png"); }
 
 .nav{ margin-inline-start:auto; display:flex; align-items:center; gap:2px; }
 .nav a{
@@ -368,17 +370,56 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
   background:linear-gradient(90deg, transparent, var(--line-2), transparent);
   opacity:.9;
 }
-.card:hover{ box-shadow:var(--shadow); }
-.card:hover{ transform:translateY(-3px); border-color:var(--line-2); }
-.card h3{ margin-bottom:10px; }
+/* a soft light that follows the pointer across the card */
+.card::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(180px circle at var(--mx,50%) var(--my,0%),
+             color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%);
+  opacity:0; transition:opacity .45s var(--ease);
+}
+.card:hover::after,.card:focus-within::after{ opacity:1; }
+.card:hover,.card:focus-within{
+  box-shadow:var(--shadow); transform:translateY(-3px);
+  border-color:color-mix(in srgb, var(--accent) 34%, var(--line-2));
+}
+.card h3{ margin-bottom:10px; transition:color .35s var(--ease); }
+.card:hover h3,.card:focus-within h3{ color:var(--accent); }
 .card p{ color:var(--ink-2); font-size:14.6px; }
+.card > *{ position:relative; z-index:1; }
+
 .card-ico{
+  position:relative;
   width:44px; height:44px; border-radius:12px; margin-bottom:18px;
   display:grid; place-items:center;
   background:color-mix(in srgb, var(--accent) 12%, transparent);
   color:var(--accent);
+  transition:background .4s var(--ease), transform .5s var(--ease),
+             box-shadow .5s var(--ease);
 }
-.card-ico svg{ width:21px; height:21px; }
+/* a ring that opens out of the tile as the card is pointed at */
+.card-ico::after{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  border:1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  opacity:0; transition:opacity .5s var(--ease), scale .5s var(--ease);
+  scale:1;
+}
+.card:hover .card-ico,.card:focus-within .card-ico{
+  background:color-mix(in srgb, var(--accent) 22%, transparent);
+  transform:translateY(-2px) scale(1.06);
+  box-shadow:0 10px 22px -14px color-mix(in srgb, var(--accent) 90%, transparent);
+}
+.card:hover .card-ico::after,.card:focus-within .card-ico::after{ opacity:1; scale:1.28; }
+.card-ico svg{ width:21px; height:21px; overflow:visible; }
+
+/* the strokes are drawn in, one after the other */
+[data-drawable] svg > *{
+  stroke-dasharray:var(--len,0); stroke-dashoffset:var(--len,0);
+}
+[data-drawable].is-drawn svg > *{
+  animation:icoDraw .68s var(--ease) both;
+  animation-delay:calc(var(--i,0) * .09s);
+}
+@keyframes icoDraw{ to{ stroke-dashoffset:0; } }
 .card-list{ list-style:none; margin:16px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:6px; }
 .card-list li{
   font-size:11.8px; color:var(--ink-3); padding:4px 10px; border-radius:999px;
@@ -534,6 +575,52 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 }
 .ci svg{ width:19px; height:19px; }
 
+/* ── social row: four equal buttons, calm drift ───────────────── */
+.socials{
+  list-style:none; margin:26px 0 0; padding:0;
+  display:flex; flex-wrap:wrap; gap:12px;
+}
+.soc{
+  --soc: var(--accent);
+  width:52px; height:52px; border-radius:16px;
+  display:grid; place-items:center;
+  color:var(--ink-2);
+  background:var(--surface); border:1px solid var(--line);
+  transition:color .35s ease, border-color .35s ease, background .35s ease,
+             transform .45s cubic-bezier(.22,.8,.3,1), box-shadow .45s ease;
+  animation:socFloat 6.5s ease-in-out infinite;
+  will-change:transform;
+}
+.socials li:nth-child(2) .soc{ animation-delay:-1.6s; }
+.socials li:nth-child(3) .soc{ animation-delay:-3.2s; }
+.socials li:nth-child(4) .soc{ animation-delay:-4.8s; }
+.soc svg{ width:23px; height:23px; display:block; transition:transform .45s cubic-bezier(.22,.8,.3,1); }
+.soc:hover,.soc:focus-visible{
+  color:var(--soc);
+  border-color:color-mix(in srgb, var(--soc) 55%, transparent);
+  background:color-mix(in srgb, var(--soc) 12%, var(--surface));
+  transform:translateY(-5px);
+  box-shadow:0 14px 26px -16px color-mix(in srgb, var(--soc) 85%, transparent);
+  animation-play-state:paused;
+}
+.soc:hover svg,.soc:focus-visible svg{ transform:scale(1.08); }
+.soc:active{ transform:translateY(-2px); }
+.soc-wa{ --soc:#25D366; }
+.soc-li{ --soc:#2C86D6; }
+.soc-ig{ --soc:#D3559B; }
+.soc-fb{ --soc:#2E7BF0; }
+:root[data-theme="day"] .soc-wa{ --soc:#128C4B; }
+:root[data-theme="day"] .soc-li{ --soc:#0A66C2; }
+:root[data-theme="day"] .soc-ig{ --soc:#B8347C; }
+:root[data-theme="day"] .soc-fb{ --soc:#1559CF; }
+@keyframes socFloat{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-4px); }
+}
+@media (prefers-reduced-motion:reduce){
+  .soc{ animation:none; }
+}
+
 .contact-form{
   padding:clamp(24px,3vw,36px); border-radius:var(--r-lg);
   background:var(--surface); border:1px solid var(--line); display:grid; gap:15px;
@@ -635,6 +722,8 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 
 @media (prefers-reduced-motion:reduce){
   .reveal{ opacity:1; transform:none; }
+  [data-drawable] svg > *{ stroke-dasharray:none; stroke-dashoffset:0; }
+  .card::after{ display:none; }
   :root[data-theme="night"] .hero::before{ animation:none; }
   :root[data-theme="night"] .eyebrow .dot{ animation:none; }
   .kicker::before{ animation:none; }
@@ -645,4 +734,130 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 .visually-hidden{
   position:absolute; width:1px; height:1px; padding:0; margin:-1px;
   overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* ══════════════ SCHWEBENDER KONTAKT-ROBOTER (FAB) ══════════════
+   A small robot parked bottom-right. It drifts up or down with the
+   scroll, idles with a slow hover, and opens the contact options. */
+.fab{
+  position:fixed; right:clamp(14px,2.2vw,26px); bottom:clamp(14px,2.2vw,26px);
+  z-index:90; display:flex; flex-direction:column; align-items:flex-end; gap:12px;
+  --fab-fly:0px; --fab-tilt:0deg; --fab-thrust:0;
+}
+
+.fab-bot{
+  width:78px; height:92px; padding:0; border:0; background:none; cursor:pointer;
+  display:block; -webkit-tap-highlight-color:transparent;
+}
+.fab-bot-inner{
+  display:block; position:relative; width:100%; height:100%;
+  transform:translateY(var(--fab-fly)) rotate(var(--fab-tilt));
+  transition:transform .12s linear;
+  animation:fabHover 4.4s ease-in-out infinite;
+}
+@keyframes fabHover{
+  0%,100%{ translate:0 0; }
+  50%{ translate:0 -6px; }
+}
+.fab-svg{ width:100%; height:100%; display:block; overflow:visible;
+  filter:drop-shadow(0 14px 18px rgba(0,0,0,.34)); }
+:root[data-theme="day"] .fab-svg{ filter:drop-shadow(0 12px 16px rgba(17,32,58,.22)); }
+
+.fb-shell{ fill:var(--fb-shell); stroke:var(--fb-edge); stroke-width:1.2; }
+.fb-belly{ fill:var(--fb-panel); }
+.fb-visor{ fill:var(--fb-visor); }
+.fb-eye{ fill:var(--fb-eyes); animation:fabBlink 6.2s infinite; }
+.fb-stem{ stroke:var(--fb-edge); stroke-width:2.4; stroke-linecap:round; fill:none; }
+.fb-bulb{ fill:#E4791E; animation:fabBulb 3.1s ease-in-out infinite; }
+.fb-ant{ transform-origin:36px 16px; animation:fabAnt 4.4s ease-in-out infinite; }
+.fb-text{
+  fill:var(--fb-visor); font-family:var(--f-body); font-weight:700;
+  font-size:7px; letter-spacing:.2px; text-anchor:middle;
+}
+.fb-jets{ opacity:calc(.22 + .78 * var(--fab-thrust)); transition:opacity .18s ease; }
+.fb-jet{
+  fill:#E4791E; transform-origin:center top;
+  scale:1 calc(.45 + 1.15 * var(--fab-thrust));
+  transition:scale .18s ease;
+}
+.fab-shadow{
+  position:absolute; left:50%; bottom:-10px; width:46px; height:9px;
+  translate:-50% 0; border-radius:50%;
+  background:radial-gradient(closest-side, rgba(0,0,0,.42), transparent);
+  opacity:.55;
+}
+:root[data-theme="day"] .fab-shadow{ background:radial-gradient(closest-side, rgba(17,32,58,.28), transparent); }
+
+:root, :root[data-theme="night"]{
+  --fb-shell:#1E3150; --fb-edge:#3D5F8C; --fb-panel:#09111F;
+  --fb-visor:#5FE9F5; --fb-eyes:#04202B;
+}
+:root[data-theme="day"]{
+  --fb-shell:#D7DFEA; --fb-edge:#9AAAC0; --fb-panel:#16263F;
+  --fb-visor:#3BC6D6; --fb-eyes:#0A1A2B;
+}
+
+@keyframes fabBlink{
+  0%,92%,100%{ scale:1 1; }
+  95%{ scale:1 .1; }
+}
+@keyframes fabBulb{
+  0%,100%{ opacity:.55; }
+  50%{ opacity:1; }
+}
+@keyframes fabAnt{
+  0%,100%{ rotate:-5deg; }
+  50%{ rotate:5deg; }
+}
+
+.fab-bot:hover .fab-bot-inner{ animation-duration:2.6s; }
+.fab-bot:focus-visible{ outline:2px solid var(--accent); outline-offset:6px; border-radius:18px; }
+
+/* the options panel */
+.fab-menu{
+  width:216px; padding:12px; border-radius:16px;
+  background:color-mix(in srgb, var(--bg-2) 92%, transparent);
+  border:1px solid var(--line-2); box-shadow:var(--shadow);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  display:grid; gap:3px;
+  transform-origin:bottom right;
+  animation:fabIn .3s cubic-bezier(.22,.9,.3,1) both;
+}
+.fab-menu[hidden]{ display:none; }
+@keyframes fabIn{
+  from{ opacity:0; transform:translateY(10px) scale(.94); }
+  to{ opacity:1; transform:none; }
+}
+.fab-menu-title{
+  margin:2px 6px 8px; font-size:11.5px; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--ink-3); font-weight:600;
+}
+.fab-opt{
+  --soc:var(--accent);
+  display:flex; align-items:center; gap:11px; padding:8px 9px; border-radius:11px;
+  color:var(--ink-2); text-decoration:none; font-size:14px; font-weight:500;
+  transition:background .25s ease, color .25s ease, transform .3s cubic-bezier(.22,.8,.3,1);
+}
+.fab-opt:hover,.fab-opt:focus-visible{
+  background:color-mix(in srgb, var(--soc) 13%, transparent);
+  color:var(--ink); transform:translateX(3px);
+}
+.fab-ico{ width:26px; height:26px; flex:0 0 auto; display:grid; place-items:center; color:var(--soc); }
+.fab-ico svg{ width:19px; height:19px; }
+.fo-mail{ --soc:var(--accent); }
+.fo-wa{ --soc:#25D366; } .fo-li{ --soc:#2C86D6; }
+.fo-ig{ --soc:#D3559B; } .fo-fb{ --soc:#2E7BF0; }
+:root[data-theme="day"] .fo-wa{ --soc:#128C4B; }
+:root[data-theme="day"] .fo-li{ --soc:#0A66C2; }
+:root[data-theme="day"] .fo-ig{ --soc:#B8347C; }
+:root[data-theme="day"] .fo-fb{ --soc:#1559CF; }
+
+@media (max-width:620px){
+  .fab-bot{ width:64px; height:76px; }
+  .fab-menu{ width:198px; }
+}
+@media (prefers-reduced-motion:reduce){
+  .fab-bot-inner{ animation:none; transform:none; }
+  .fb-ant,.fb-bulb,.fb-eye{ animation:none; }
+  .fab-menu{ animation:none; }
 }

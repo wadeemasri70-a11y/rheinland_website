@@ -22,9 +22,10 @@ assets/js/scene3d.js  Geometrie, Materialien, Licht, Zeichnen
 assets/js/anim3d.js   Zeitachse der Animation
 assets/js/hero3d.js   Taktgeber, Theme-Abgleich, Replay
 assets/js/i18n.js     Inhalte auf Deutsch und Englisch
-assets/js/main.js     Theme, Sprache, Navigation, Formular
+assets/js/main.js     Theme, Sprache, Navigation, Kacheln, Kontaktroboter, Formular
 
-assets/img/           Logo (Wortmarke und Bildmarke)
+assets/img/           Logo (Wortmarke und Bildmarke), je einmal für
+                      Tag und — umgefärbt — für Nacht, dazu die Fotos
 ```
 
 ## Die Hero-Szene
@@ -180,6 +181,17 @@ er zurück in die Dose, weit gezogen bleibt er draußen und an der Dose blitzt
 kurz ein Funke. Vorher war es ein reiner Schwellwert — ab einer gewissen
 Entfernung sprang er heraus, dazwischen passierte nichts.
 
+Die Leitung wird dabei aus der **gemessenen** Position des Steckers gezeichnet,
+nicht aus einer Zahl, die zur Stylesheet-Regel passen soll. Das war vorher die
+Fehlerquelle: Der herausgezogene Stecker wird per CSS um 44 px nach unten
+gesetzt, das Kabel aber an seiner Ruheposition gezeichnet — beim Wiedereinstecken
+klaffte sichtbar eine Lücke, die Leitung wirkte durchtrennt. Jetzt zeichnet
+`trackCable()` das Kabel für die Dauer jeder Bewegung in jedem Frame neu und
+schaltet dafür die eigene `transition:d` ab (`.machine-cable.is-tracking`), damit
+sich nicht zwei Animationen überlagern. Aus demselben Grund stupst der
+Aufmerksamkeits-Hinweis den Stecker nicht mehr an, sondern lässt nur seinen Rand
+kurz aufleuchten: Jede Bewegung, der das Kabel nicht folgt, reißt die Naht auf.
+
 Die Felder werden dabei auf `readonly` gesetzt statt auf `disabled`: Sie
 bleiben vorlesbar und mit der Tastatur erreichbar, nehmen aber nichts an.
 Für das Kontrollkästchen und die Auswahlliste greift `readonly` nicht, die
@@ -250,6 +262,18 @@ die Hero-Szene, ein sehr langsamer Lichtschleier wandert dahinter, und der
 Akzentpunkt in der Auszeichnungszeile atmet. Im Tagmodus entfällt beides —
 Staub liest sich auf hellem Grund als Schmutz, nicht als Atmosphäre.
 
+Das Logo bekommt im Nachtmodus eine eigene Fassung. Vorher lag ein
+`brightness(0) invert(1)` darüber, das die dunkle Wortmarke zwar sichtbar
+machte, aber eben alles einebnete — auch das Orange, das im Fließtext als
+Initialen wiederkehrt. Stattdessen liegen jetzt `logo-full-night.png` und
+`logo-mark-night.png` daneben: Navy wird zu hellem Ink, das Cyan zum
+Nacht-Akzent, das Orange bleibt exakt `#E4791E`. Umgeschaltet wird per
+`content:url(…)` auf `:root[data-theme="night"]`, das Markup bleibt also
+unangetastet. Erzeugt wurden die beiden Dateien pixelweise: jede Farbe wird
+über inverse quadratische Abstände auf die vier Markenfarben verteilt und
+durch deren Nachtentsprechungen ersetzt, damit auch die Kanten sauber
+übergehen statt auf eine Farbe zu springen.
+
 Nacht ist die Voreinstellung, Tag die Alternative; die Wahl wird im
 `localStorage` gemerkt und vor dem ersten Rendern gesetzt, damit nichts
 aufblitzt. Beide Themes sind über Custom Properties auf
@@ -267,6 +291,46 @@ Direkt aus dem Logo entnommen:
 | Navy dunkel      | `#001854` |
 | Orange           | `#E4791E` |
 
+## Kontaktwege
+
+Unter den Kontaktdaten stehen vier gleich große Schaltflächen — WhatsApp,
+LinkedIn, Instagram, Facebook. Sie schweben versetzt, jede mit eigener
+Verzögerung, und nehmen beim Überfahren die Farbe ihres Dienstes an; für den
+Tagmodus sind die Markenfarben abgedunkelt, damit sie auf hellem Grund nicht
+schreien. Die Profil-Adressen sind Platzhalter (siehe Liste unten).
+
+Unten rechts sitzt zusätzlich ein kleiner Roboter, gebaut wie der aus der
+Hero-Szene: kantiger Kopf, leuchtendes Visierband, orangefarbene Antenne, auf
+dem Bauch „CONTACT US“. Er reagiert auf das Scrollen — jeder Scrollschritt gibt
+ihm einen Impuls nach oben oder unten, eine gedämpfte Feder trägt ihn dorthin
+und wieder zurück, und seine Düsen brennen heller, solange er unterwegs ist.
+Die Schleife läuft nur, während er sich bewegt, und hält sich selbst an,
+sobald er wieder ruhig in seiner Parkposition steht.
+
+Ein Klick öffnet die Auswahl: E-Mail und dieselben vier Netzwerke. Das Menü
+schließt bei Klick daneben, bei `Escape` und nachdem ein Link gefolgt wurde.
+Die Bauchbeschriftung ist über `textLength` auf die Breite der Bauchplatte
+festgenagelt, damit sie nicht überläuft, falls die Hausschrift einmal nicht
+lädt.
+
+## Leistungskacheln
+
+Die Symbole der zehn Leistungen zeichnen sich selbst. Jede Linie wird einmal
+mit `getTotalLength()` vermessen und in einen Strich verwandelt, der genau so
+lang ist wie sie selbst; den Strichversatz auf null zu ziehen, sieht aus, als
+würde das Symbol Linie für Linie gezeichnet. Das passiert, wenn die Kachel ins
+Bild kommt, und noch einmal, sobald jemand mit dem Zeiger darauf geht.
+
+Weil ein ungezeichnetes Symbol ein unsichtbares Symbol ist, bekommt der Ablauf
+zwei Netze: bei `prefers-reduced-motion` werden alle sofort gezeichnet, und was
+der Beobachter nach 3,5 Sekunden nicht erreicht hat, wird ebenfalls
+nachgezogen.
+
+Zusätzlich folgt ein weicher Lichtschein dem Zeiger über die Kachel. Er wird in
+einem `requestAnimationFrame`-Durchgang als zwei Custom Properties geschrieben,
+damit das Bewegen der Maus über das Raster nicht mitten im Frame Layout liest.
+Auf Geräten ohne feinen Zeiger entfällt er.
+
 ## Sprachen
 
 Deutsch ist die Standardsprache und steht direkt im HTML; Englisch liegt in
@@ -277,6 +341,10 @@ weiterer Block.
 ## Vor dem Livegang zu erledigen
 
 - [ ] Telefon- und WhatsApp-Nummer eintragen (Platzhalter `+49 000…`)
+- [ ] Die vier Profil-Adressen eintragen. Sie stehen zweimal im `index.html`,
+      jeweils über einem `TODO`-Kommentar: in der Liste `.socials` im
+      Kontaktabschnitt und im Menü des Roboters unten rechts. Platzhalter sind
+      `wa.me/4900000000000`, `linkedin.com`, `instagram.com`, `facebook.com`
 - [ ] Impressum vervollständigen: Anschrift, USt-IdNr. bzw. Hinweis auf
       Kleinunternehmerregelung, ggf. Registereintrag
 - [ ] Datenschutzerklärung an Hosting und eingesetzte Dienste anpassen und

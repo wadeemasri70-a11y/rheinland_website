@@ -34,6 +34,89 @@
       'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
   });
 
+  /* ── the service icons draw themselves ───────────────────────────────
+     Every stroke in an icon is measured once and turned into a single
+     dash as long as the stroke itself. Pulling the dash offset back to
+     zero makes the icon appear to be drawn line by line — first when the
+     card scrolls in, and again whenever the card is pointed at, so the
+     grid answers back instead of just sitting there.
+     ──────────────────────────────────────────────────────────────────── */
+
+  (function drawableIcons() {
+    var hosts = document.querySelectorAll('.card-ico[data-ico], .step-ico[data-ico]');
+    if (!hosts.length) return;
+
+    Array.prototype.forEach.call(hosts, function (host) {
+      var shapes = host.querySelectorAll('path, rect, circle, line, polyline, polygon');
+      var ok = false;
+      Array.prototype.forEach.call(shapes, function (sh, i) {
+        var len = 0;
+        try { len = sh.getTotalLength(); } catch (err) { len = 0; }
+        if (!len || !isFinite(len)) return;              // engine cannot measure it
+        sh.style.setProperty('--len', len.toFixed(1));
+        sh.style.setProperty('--i', i);
+        ok = true;
+      });
+      if (ok) host.setAttribute('data-drawable', '');
+    });
+
+    /* Safety net: an undrawn icon is an invisible icon, so anything the
+       reveal never reached is drawn anyway a moment after load. */
+    function drawAll() {
+      Array.prototype.forEach.call(
+        document.querySelectorAll('[data-drawable]:not(.is-drawn)'),
+        function (h) { h.classList.add('is-drawn'); });
+    }
+    if (reduced) { drawAll(); return; }
+    setTimeout(drawAll, 3500);
+
+    /* replay the drawing on pointer-in, but never mid-draw */
+    Array.prototype.forEach.call(document.querySelectorAll('.card, .step'), function (card) {
+      var host = card.querySelector('[data-drawable]');
+      if (!host) return;
+      var busy = false;
+      function replay() {
+        if (busy || !host.classList.contains('is-drawn')) return;
+        busy = true;
+        host.classList.remove('is-drawn');
+        void host.offsetWidth;                            // restart the animation
+        host.classList.add('is-drawn');
+        setTimeout(function () { busy = false; }, 900);
+      }
+      card.addEventListener('pointerenter', replay);
+      card.addEventListener('focusin', replay);
+    });
+  }());
+
+  /* ── cards follow the pointer ─────────────────────────────────────────
+     A soft highlight sits under the cursor while it is over a card. It is
+     written as two custom properties in a rAF pass, so moving the mouse
+     across the grid never reads layout in the middle of a frame.
+     ──────────────────────────────────────────────────────────────────── */
+
+  (function cardSpotlight() {
+    if (reduced || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    var grid = document.getElementById('svcGrid');
+    if (!grid) return;
+
+    var pending = null, queued = false;
+
+    function write() {
+      queued = false;
+      if (!pending) return;
+      pending.card.style.setProperty('--mx', pending.x.toFixed(1) + 'px');
+      pending.card.style.setProperty('--my', pending.y.toFixed(1) + 'px');
+    }
+
+    grid.addEventListener('pointermove', function (e) {
+      var card = e.target.closest ? e.target.closest('.card') : null;
+      if (!card) return;
+      var r = card.getBoundingClientRect();
+      pending = { card: card, x: e.clientX - r.left, y: e.clientY - r.top };
+      if (!queued) { queued = true; requestAnimationFrame(write); }
+    }, { passive: true });
+  }());
+
   /* ── theme ────────────────────────────────────────────────────────
      Night is the default. A stored choice always wins; if there is none
      we stay on night rather than following the system, because the hero
@@ -211,7 +294,11 @@
 
   var reveals = document.querySelectorAll('.reveal');
   if (reduced || !('IntersectionObserver' in window)) {
-    Array.prototype.forEach.call(reveals, function (r) { r.classList.add('is-in'); });
+    Array.prototype.forEach.call(reveals, function (r) {
+      r.classList.add('is-in');
+      var ico = r.querySelector('[data-drawable]');
+      if (ico) ico.classList.add('is-drawn');
+    });
   } else {
     var ro = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
@@ -219,6 +306,8 @@
         var idx = Array.prototype.indexOf.call(en.target.parentNode.children, en.target);
         en.target.style.transitionDelay = Math.min(idx, 6) * 60 + 'ms';
         en.target.classList.add('is-in');
+        var ico = en.target.querySelector('[data-drawable]');
+        if (ico) ico.classList.add('is-drawn');
         ro.unobserve(en.target);
       });
     }, { rootMargin: '0px 0px -6% 0px', threshold: .1 });
@@ -509,6 +598,9 @@
       // with the plug out there is nothing to animate
       if (machineEl && !plugged) machineEl.classList.remove('is-live');
       else if (machineEl && inView) machineEl.classList.add('is-live');
+
+      // the plug is about to travel: keep the lead glued to it
+      trackCable(620);
     }
     window.RDW_SET_PLUG = setPlugged;
 
@@ -547,12 +639,12 @@
       };
     }
 
-    function cablePath(dx, dy) {
+    function cablePath() {
       var g = cableGeom();
       if (!g) return '';
       if (cableSvg) cableSvg.setAttribute('viewBox', '0 0 ' + Math.round(g.w) + ' ' + Math.round(g.h));
 
-      var px = g.px + dx, py = g.py + dy;
+      var px = g.px, py = g.py;
       var stubY = py + STUB;
       var run = Math.max(6, g.ay - stubY);           // 45 degrees: run equals rise
       var cornerX = Math.max(g.ax + 6, px - run);
@@ -563,13 +655,40 @@
              ' H' + g.ax;
     }
 
-    function setCable(dx, dy) {
-      var d = cablePath(dx || 0, dy || 0);
+    /* The lead is redrawn from the plug's measured position, so it is tied
+       to where the plug really is rather than to a number we hope matches
+       the stylesheet. That is what keeps it from looking severed while the
+       plug springs back into the socket. */
+    function setCable() {
+      var d = cablePath();
       if (!d) return;
       if (cableW) cableW.setAttribute('d', d);
       if (cableL) cableL.setAttribute('d', d);
     }
     window.RDW_CABLE = setCable;
+
+    /* While the plug is moving under CSS — springing home, dropping out of
+       the socket, or just the idle nudge — the lead is redrawn every frame
+       and its own transition is switched off, so the two never drift apart
+       and the cable never appears to snap. */
+    var trackUntil = 0, tracking = false;
+    var now = function () {
+      return (window.performance && performance.now) ? performance.now() : Date.now();
+    };
+
+    function trackCable(ms) {
+      trackUntil = Math.max(trackUntil, now() + (ms || 620));
+      if (cableSvg) cableSvg.classList.add('is-tracking');
+      if (tracking) return;
+      tracking = true;
+      (function step() {
+        setCable();
+        if (now() < trackUntil) { requestAnimationFrame(step); return; }
+        tracking = false;
+        if (cableSvg) cableSvg.classList.remove('is-tracking');
+        setCable();
+      }());
+    }
 
     if (plugBtn) {
       var dragging = false, sx = 0, sy = 0, dx = 0, dy = 0;
@@ -578,8 +697,8 @@
         dragging = false;
         plugBtn.classList.remove('is-dragging');
         plugBtn.style.transform = '';
-        // let the class-driven rest position settle, then redraw to match
-        setTimeout(function () { setCable(0, 0); }, 460);
+        // the lead follows the plug all the way home instead of jumping
+        trackCable(620);
       }
 
       plugBtn.addEventListener('pointerdown', function (e) {
@@ -600,7 +719,7 @@
         if (dx < -34) dx = -34;
         if (dx > 34) dx = 34;
         plugBtn.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
-        setCable(dx, dy);
+        setCable();
       });
 
       plugBtn.addEventListener('pointerup', function (e) {
@@ -610,7 +729,6 @@
         endDrag();
         if (pulled > PULL_OUT) {
           setPlugged(false);
-          setTimeout(function () { setCable(0, 0); }, 460);
           if (spark && !reduced) {
             spark.classList.remove('is-lit');
             void spark.offsetWidth;                        // restart the flash
@@ -629,18 +747,15 @@
     if (fixBtn) {
       fixBtn.addEventListener('click', function () {
         setPlugged(true);
-    setCable(0, 0);
-    window.addEventListener('resize', function () { setCable(0, 0); }, { passive: true });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setCable(0, 0); });
         var first = form && form.querySelector('input, textarea');
         if (first) first.focus();
       });
     }
 
     setPlugged(true);
-    setCable(0, 0);
-    window.addEventListener('resize', function () { setCable(0, 0); }, { passive: true });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setCable(0, 0); });
+    setCable();
+    window.addEventListener('resize', function () { setCable(); }, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setCable(); });
 
     /* ── confirmation on the screen ──────────────────────────────────── */
 
@@ -736,6 +851,93 @@
       if (window.RDW_MACHINE) window.RDW_MACHINE.done();
     });
   }
+
+  /* ── the little contact robot ────────────────────────────────────────
+     It sits bottom-right and drifts with the scroll: every wheel turn
+     gives it an impulse, a damped spring carries it there and back, and
+     the jets brighten while it moves. Click opens the contact options.
+     ──────────────────────────────────────────────────────────────────── */
+
+  (function contactBot() {
+    var fab = document.getElementById('fab');
+    var bot = document.getElementById('fabBot');
+    var menu = document.getElementById('fabMenu');
+    if (!fab || !bot || !menu) return;
+
+    /* ---- the menu ---- */
+    var open = false;
+
+    function setOpen(next) {
+      open = next;
+      menu.hidden = !next;
+      bot.setAttribute('aria-expanded', next ? 'true' : 'false');
+      fab.classList.toggle('is-open', next);
+    }
+
+    bot.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setOpen(!open);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (open && !fab.contains(e.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && open) { setOpen(false); bot.focus(); }
+    });
+
+    // following a link should leave the menu closed behind it
+    Array.prototype.forEach.call(menu.querySelectorAll('a'), function (a) {
+      a.addEventListener('click', function () { setOpen(false); });
+    });
+
+    /* ---- the flight ---- */
+    if (reduced) return;
+
+    var MAX = 30;            // px the robot may stray from its parking spot
+    var drive = 0;           // where the scroll wants it
+    var fly = 0, vel = 0;    // where it actually is
+    var thrust = 0;
+    var lastY = window.scrollY;
+    var running = false;
+
+    function frame() {
+      drive *= 0.88;
+      if (Math.abs(drive) < 0.05) drive = 0;
+
+      // critically-ish damped spring towards the driven position
+      vel += (drive - fly) * 0.16 - vel * 0.24;
+      fly += vel;
+
+      var want = Math.min(1, (Math.abs(vel) / 2.4 + Math.abs(drive) / MAX) * 0.9);
+      thrust += (want - thrust) * 0.2;
+
+      fab.style.setProperty('--fab-fly', fly.toFixed(2) + 'px');
+      fab.style.setProperty('--fab-tilt', (fly * -0.14).toFixed(2) + 'deg');
+      fab.style.setProperty('--fab-thrust', thrust.toFixed(3));
+
+      if (Math.abs(fly) < 0.05 && Math.abs(vel) < 0.05 && drive === 0 && thrust < 0.02) {
+        fab.style.setProperty('--fab-fly', '0px');
+        fab.style.setProperty('--fab-tilt', '0deg');
+        fab.style.setProperty('--fab-thrust', '0');
+        running = false;
+        return;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('scroll', function () {
+      var y = window.scrollY;
+      var d = y - lastY;
+      lastY = y;
+      if (!d) return;
+      // one impulse per scroll step, capped so a flick cannot launch it
+      drive += Math.max(-26, Math.min(26, d)) * 0.5;
+      drive = Math.max(-MAX, Math.min(MAX, drive));
+      if (!running) { running = true; requestAnimationFrame(frame); }
+    }, { passive: true });
+  }());
 
   var year = document.getElementById('year');
   if (year) year.textContent = new Date().getFullYear();
