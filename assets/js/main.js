@@ -177,6 +177,97 @@
     Array.prototype.forEach.call(reveals, function (r) { ro.observe(r); });
   }
 
+  /* ── counting figures ────────────────────────────────────────────────
+     The trust strip counts up from zero every time it scrolls into view,
+     not just the first time. Leaving the viewport resets the figures to
+     zero while they are off screen, so the next pass starts clean without
+     a visible jump back.
+     ──────────────────────────────────────────────────────────────────── */
+
+  (function counters() {
+    var nodes = Array.prototype.slice.call(document.querySelectorAll('.strip-num[data-count]'));
+    if (!nodes.length) return;
+
+    var items = nodes.map(function (el, i) {
+      return {
+        el: el,
+        cell: el.parentNode,
+        out: el.querySelector('.n') || el,
+        target: parseInt(el.getAttribute('data-count'), 10) || 0,
+        delay: i * 90,
+        start: 0,
+        running: false,
+        active: false
+      };
+    });
+
+    function paint(it, v) {
+      var txt = String(v);
+      if (it.out.textContent !== txt) it.out.textContent = txt;
+    }
+
+    if (reduced || !('IntersectionObserver' in window)) {
+      items.forEach(function (it) { paint(it, it.target); it.cell.classList.add('is-counting'); });
+      return;
+    }
+
+    items.forEach(function (it) { paint(it, 0); });
+
+    var raf = 0;
+    var DUR = 1100;
+
+    function tick(now) {
+      var busy = false;
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (!it.running) continue;
+        var p = (now - it.start - it.delay) / DUR;
+        if (p < 0) { busy = true; continue; }
+        if (p >= 1) { paint(it, it.target); it.running = false; continue; }
+        var e = 1 - Math.pow(1 - p, 3);            // ease out
+        paint(it, Math.round(it.target * e));
+        busy = true;
+      }
+      raf = busy ? requestAnimationFrame(tick) : 0;
+    }
+
+    function run(it) {
+      if (it.active) return;              // already counting or settled
+      it.active = true;
+      it.start = performance.now();
+      it.running = true;
+      it.cell.classList.add('is-counting');
+      paint(it, 0);
+      if (!raf) raf = requestAnimationFrame(tick);
+    }
+
+    function stop(it) {
+      if (!it.active) return;
+      it.active = false;
+      it.running = false;
+      it.cell.classList.remove('is-counting');
+      paint(it, 0);
+    }
+
+    /* `isIntersecting` stays true for as long as a single pixel is on
+       screen, so it cannot tell us when the strip has left. Watch the ratio
+       against explicit thresholds instead, and use a gap between the start
+       and stop points so a figure parked near the edge does not flicker. */
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var it = null;
+        for (var i = 0; i < items.length; i++) {
+          if (items[i].el === en.target) { it = items[i]; break; }
+        }
+        if (!it) return;
+        if (en.intersectionRatio >= 0.6) run(it);
+        else if (en.intersectionRatio <= 0.15) stop(it);
+      });
+    }, { threshold: [0, 0.15, 0.6, 1] });
+
+    items.forEach(function (it) { io.observe(it.el); });
+  }());
+
   /* ── package buttons prefill the form ────────────────────────────── */
 
   var topicSelect = document.getElementById('topicSelect');

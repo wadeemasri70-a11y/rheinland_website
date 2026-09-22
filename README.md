@@ -86,6 +86,24 @@ Bei `prefers-reduced-motion: reduce` wird statt der Animation das fertige,
 beleuchtete Schlussbild gezeigt. Läuft die Szene aus dem Sichtfeld, pausiert
 die Schleife.
 
+## Zählende Kennzahlen
+
+Die vier Zahlen im Streifen unter dem Hero zählen bei **jedem** Eintritt ins
+Sichtfeld von null hoch, nicht nur beim ersten Mal. Der Zielwert steht als
+`data-count` im HTML, nicht in den Sprachdateien — er ist in beiden Sprachen
+derselbe.
+
+Eine Feinheit, die leicht Zeit kostet: `isIntersecting` bleibt wahr, solange
+auch nur ein Pixel sichtbar ist, und taugt deshalb nicht, um das Verlassen
+des Sichtfelds zu erkennen. Der Beobachter wertet stattdessen
+`intersectionRatio` gegen ausdrückliche Schwellen aus — ab 0,6 startet er,
+unter 0,15 setzt er zurück. Der Abstand zwischen beiden Werten verhindert,
+dass eine Zahl am Rand des Sichtfelds flackert. Zurückgesetzt wird, während
+der Streifen außerhalb des Bildes liegt, sodass der nächste Durchgang ohne
+sichtbaren Sprung bei null beginnt.
+
+Bei `prefers-reduced-motion: reduce` stehen die Endwerte sofort da.
+
 ## Themes
 
 Nacht ist die Voreinstellung, Tag die Alternative; die Wahl wird im

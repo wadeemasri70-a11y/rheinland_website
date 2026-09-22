@@ -31,9 +31,9 @@
 
 /* night — the default */
 :root, :root[data-theme="night"]{
-  --bg:       #0C1526;
-  --bg-2:     #101B30;
-  --bg-3:     #16243D;
+  --bg:       #0B1422;
+  --bg-2:     #0F1A2C;
+  --bg-3:     #142238;
   --surface:  rgba(150,190,235,.05);
   --surface-2:rgba(150,190,235,.085);
   --line:     rgba(140,185,230,.14);
@@ -51,16 +51,16 @@
 
 /* day */
 :root[data-theme="day"]{
-  --bg:       #F7F9FC;
-  --bg-2:     #EFF3F8;
-  --bg-3:     #E6ECF4;
+  --bg:       #FAFAF8;
+  --bg-2:     #F3F4F1;
+  --bg-3:     #EAEBE7;
   --surface:  #FFFFFF;
-  --surface-2:#F2F6FA;
-  --line:     rgba(16,42,80,.12);
-  --line-2:   rgba(16,42,80,.22);
-  --ink:      #0D1B33;
-  --ink-2:    #44566E;
-  --ink-3:    #6B7D94;
+  --surface-2:#F6F7F4;
+  --line:     rgba(24,38,62,.11);
+  --line-2:   rgba(24,38,62,.20);
+  --ink:      #11203A;
+  --ink-2:    #4A5A70;
+  --ink-3:    #74839A;
   --accent:   #0C7C8A;
   --accent-2: #00929F;
   --on-accent:#FFFFFF;
@@ -90,7 +90,7 @@ img{ max-width:100%; height:auto; display:block; }
 a{ color:inherit; }
 p{ margin:0; }
 
-h1,h2,h3,h4{ font-family:var(--f-display); font-weight:600; line-height:1.18; margin:0; letter-spacing:-.018em; }
+h1,h2,h3,h4{ font-family:var(--f-display); font-weight:600; line-height:1.16; margin:0; letter-spacing:-.021em; }
 h2{ font-size:clamp(26px,3vw,42px); }
 h3{ font-size:clamp(17px,1.35vw,20px); }
 h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600; }
@@ -191,8 +191,10 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
              border-color .3s var(--ease), color .3s var(--ease);
 }
 .btn:hover{ transform:translateY(-1px); }
-.btn-primary{ color:var(--on-accent); background:var(--accent-2); }
-.btn-primary:hover{ background:var(--accent); }
+.btn-primary{ color:var(--on-accent); background:var(--accent-2);
+  box-shadow:0 8px 20px -12px color-mix(in srgb, var(--accent-2) 80%, transparent); }
+.btn-primary:hover{ background:var(--accent);
+  box-shadow:0 12px 26px -12px color-mix(in srgb, var(--accent) 85%, transparent); }
 .btn-ghost{ color:var(--ink); border-color:var(--line-2); background:transparent; }
 .btn-ghost:hover{ border-color:var(--accent); color:var(--accent); }
 .btn-sm{ padding:11px 18px; font-size:14px; }
@@ -205,7 +207,13 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 /* ── section furniture ───────────────────────────────────────────────── */
 
 .section{ padding-block:var(--sec-y); position:relative; }
-.section-alt{ background:var(--bg-2); }
+.section-alt{ background:var(--bg-2); border-block:1px solid var(--line); }
+/* a hairline that fades out at both ends, so sections separate without
+   the page turning into a stack of solid bands */
+.section + .section:not(.section-alt)::before{
+  content:""; position:absolute; inset-inline:var(--gut); top:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--line) 22%, var(--line) 78%, transparent);
+}
 
 .sec-head{ max-width:720px; margin-bottom:clamp(38px,5vw,64px); }
 .kicker{
@@ -214,7 +222,7 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
   color:var(--accent); margin-bottom:16px;
 }
 .kicker::before{ content:""; width:20px; height:1px; background:currentColor; opacity:.55; }
-.sec-lead{ color:var(--ink-2); font-size:clamp(15.5px,1vw,17.5px); margin-top:14px; max-width:64ch; }
+.sec-lead{ color:var(--ink-2); font-size:clamp(15.5px,1vw,17.5px); margin-top:15px; max-width:58ch; }
 .fineprint{ color:var(--ink-3); font-size:13.5px; margin-top:26px; max-width:76ch; }
 .muted{ color:var(--ink-3); }
 
@@ -251,27 +259,88 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
   content:""; width:5px; height:5px; border-radius:50%; background:var(--accent); flex:0 0 auto;
 }
 
-/* ── trust strip ─────────────────────────────────────────────────────── */
+/* ── trust strip ─────────────────────────────────────────────────────
+   The figures count up from zero whenever the strip scrolls into view, so
+   the block needs room to breathe and a baseline the digits can settle on.
+   ──────────────────────────────────────────────────────────────────── */
 
 .strip{ border-block:1px solid var(--line); background:var(--bg-2); }
-.strip-grid{ display:grid; grid-template-columns:repeat(4,1fr); }
-.strip-grid > div{ padding:26px 12px; text-align:center; border-inline-start:1px solid var(--line); }
-.strip-grid > div:first-child{ border-inline-start:0; }
-.strip-grid strong{
-  display:block; font-family:var(--f-display); font-size:clamp(20px,1.9vw,26px);
-  font-weight:600; color:var(--ink);
+.strip-grid{
+  display:grid; grid-template-columns:repeat(4,1fr);
+  padding-block:clamp(30px,3.4vw,46px);
 }
-.strip-grid span{ display:block; font-size:13px; color:var(--ink-3); margin-top:2px; }
+.strip-grid > div{
+  position:relative;
+  padding:4px clamp(10px,2vw,26px);
+  text-align:center;
+}
+/* dividers fade out at both ends instead of hard rules */
+.strip-grid > div + div::before{
+  content:""; position:absolute; inset-inline-start:0; top:14%; bottom:14%;
+  width:1px;
+  background:linear-gradient(180deg, transparent, var(--line) 24%, var(--line) 76%, transparent);
+}
+
+.strip-num{
+  display:flex; align-items:baseline; justify-content:center; gap:3px;
+  font-family:var(--f-display);
+  font-size:clamp(34px,4.2vw,54px);
+  font-weight:600; line-height:1; letter-spacing:-.035em;
+  color:var(--ink);
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1;
+}
+.strip-num .n{
+  /* fixed width per digit count stops the row jittering while it counts */
+  display:inline-block; min-width:1ch; text-align:center;
+}
+.strip-num .suffix{ font-size:.46em; font-weight:600; color:var(--accent); letter-spacing:0; }
+
+/* a rule under each figure that draws itself as the number lands */
+.strip-rule{
+  display:block; height:2px; width:26px; margin:14px auto 0;
+  border-radius:2px; background:var(--accent);
+  transform:scaleX(0); transform-origin:center;
+  transition:transform .8s var(--ease);
+}
+.strip-grid > div.is-counting .strip-rule{ transform:scaleX(1); }
+
+.strip-label{
+  display:block; margin-top:12px;
+  font-size:13.2px; line-height:1.5; color:var(--ink-3);
+}
+
+@media (max-width:900px){
+  .strip-grid{ grid-template-columns:repeat(2,1fr); gap:26px 0; }
+  .strip-grid > div:nth-child(odd)::before{ display:none; }
+  .strip-grid > div + div::before{ top:6%; bottom:6%; }
+}
+@media (max-width:420px){
+  .strip-grid{ grid-template-columns:1fr; }
+  .strip-grid > div + div::before{
+    inset:0 14% auto 14%; width:auto; height:1px;
+    background:linear-gradient(90deg, transparent, var(--line), transparent);
+  }
+}
 
 /* ── cards ───────────────────────────────────────────────────────────── */
 
 .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(266px,1fr)); gap:16px; }
 .card{
+  position:relative; overflow:hidden;
   padding:28px 26px 26px; border-radius:var(--r-lg);
   background:var(--surface); border:1px solid var(--line);
-  transition:transform .4s var(--ease), border-color .4s var(--ease), background .4s var(--ease);
+  transition:transform .4s var(--ease), border-color .4s var(--ease),
+             background .4s var(--ease), box-shadow .4s var(--ease);
 }
-.card:hover{ transform:translateY(-3px); border-color:var(--line-2); background:var(--surface-2); }
+/* a highlight along the top edge reads as light falling from above */
+.card::before{
+  content:""; position:absolute; inset-inline:18%; top:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--line-2), transparent);
+  opacity:.9;
+}
+.card:hover{ box-shadow:var(--shadow); }
+.card:hover{ transform:translateY(-3px); border-color:var(--line-2); }
 .card h3{ margin-bottom:10px; }
 .card p{ color:var(--ink-2); font-size:14.6px; }
 .card-ico{
