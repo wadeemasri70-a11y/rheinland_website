@@ -169,3 +169,123 @@
   .machine.is-live .mc-live{ opacity:.7; stroke-dashoffset:0; stroke-dasharray:none; }
   .kbd-key{ transition:none; }
 }
+
+/* ==========================================================================
+   The plug, the fault state and the confirmation screen
+   ========================================================================== */
+
+/* ── the plug ────────────────────────────────────────────────────────── */
+
+.machine-power{ pointer-events:none; }   /* only the plug is interactive */
+
+.machine-plug{
+  position:absolute; top:-10px; inset-inline-end:1px;
+  width:30px; height:28px; padding:0;
+  border:0; background:none; cursor:grab;
+  pointer-events:auto; touch-action:none;
+  transition:transform .42s var(--ease);
+  z-index:3;
+}
+.machine-plug:active{ cursor:grabbing; }
+.machine-plug svg{ width:100%; height:100%; overflow:visible; }
+.pl-body { fill:var(--surface-2); stroke:var(--line-2); stroke-width:1.4; }
+.pl-prong{ fill:var(--ink-3); opacity:.8; }
+.pl-grip { fill:var(--line-2); }
+.machine-plug:hover .pl-body{ stroke:var(--accent); }
+
+/* pulled out: the plug drops away from the socket and the lead goes slack */
+.machine.is-unplugged .machine-plug{ transform:translate(-26px, 34px) rotate(-16deg); }
+.machine.is-unplugged .pl-prong{ fill:#D9534F; opacity:1; }
+
+.mc-wire, .mc-live{ transition:d .42s var(--ease); }
+.machine.is-unplugged .mc-wire,
+.machine.is-unplugged .mc-live{
+  d:path("M258 52 C 236 66, 194 42, 140 48 C 84 60, 44 44, 8 60");
+}
+.machine.is-unplugged .mc-live{ opacity:0 !important; animation:none !important; }
+
+/* ── fault banner, deliberately above the box ────────────────────────── */
+
+.machine-alert{
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+  margin-bottom:16px; padding:12px 16px;
+  border-radius:12px;
+  background:color-mix(in srgb, #D9534F 12%, var(--surface));
+  border:1px solid color-mix(in srgb, #D9534F 42%, transparent);
+  color:#E8736E;
+  font-size:14px;
+  animation:alertIn .3s var(--ease) both;
+}
+.machine-alert[hidden]{ display:none; }
+@keyframes alertIn{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+
+.ma-led{
+  width:9px; height:9px; border-radius:50%; flex:0 0 auto;
+  background:#E8433C; box-shadow:0 0 10px #E8433C;
+  animation:faultBlink 1.1s steps(1,end) infinite;
+}
+@keyframes faultBlink{ 0%,49%{ opacity:1; } 50%,100%{ opacity:.18; } }
+
+.ma-code{
+  font-family:var(--f-mono); font-size:12.5px; font-weight:500;
+  letter-spacing:.09em; color:#FF8A84;
+  padding:3px 8px; border-radius:5px;
+  background:color-mix(in srgb, #D9534F 18%, transparent);
+}
+.ma-text{ color:var(--ink-2); }
+.ma-fix{
+  margin-inline-start:auto;
+  padding:7px 14px; border-radius:8px; cursor:pointer;
+  font-family:var(--f-body); font-size:13px; font-weight:600;
+  color:#fff; background:#C9443F; border:1px solid #C9443F;
+  transition:background .25s var(--ease);
+}
+.ma-fix:hover{ background:#B23A36; }
+
+/* ── the machine with no power ───────────────────────────────────────── */
+
+.machine.is-unplugged .machine-led{ background:#E8433C; box-shadow:0 0 10px #E8433C; animation:none; }
+.machine.is-unplugged .machine-body{ border-color:color-mix(in srgb, #D9534F 34%, var(--line-2)); }
+
+.machine.is-unplugged .machine-viewport{
+  filter:grayscale(.55) brightness(.62);
+}
+.machine.is-unplugged .machine-viewport::after{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:2;
+  background:radial-gradient(120% 90% at 50% 40%, transparent 40%, rgba(120,20,16,.30));
+}
+.machine.is-unplugged .contact-form{ pointer-events:none; }
+.machine.is-unplugged .machine-kbd{ opacity:.5; filter:grayscale(.6); }
+
+/* ── confirmation on the screen ──────────────────────────────────────── */
+
+.machine-done{
+  position:absolute; inset:0; z-index:4;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; padding:30px; text-align:center;
+  background:var(--bg);
+  animation:doneIn .45s var(--ease) both;
+}
+.machine-done[hidden]{ display:none; }
+@keyframes doneIn{ from{ opacity:0; transform:scale(.98); } to{ opacity:1; transform:none; } }
+
+.md-check{
+  width:58px; height:58px; border-radius:50%;
+  display:grid; place-items:center;
+  color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 14%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.md-check svg{ width:30px; height:30px; }
+.md-check svg path{ stroke-dasharray:34; stroke-dashoffset:34; animation:checkDraw .5s .18s var(--ease) forwards; }
+@keyframes checkDraw{ to{ stroke-dashoffset:0; } }
+
+.machine-done h3{ font-size:clamp(19px,1.7vw,23px); }
+.machine-done p{ color:var(--ink-2); font-size:14.6px; max-width:42ch; }
+
+@media (prefers-reduced-motion:reduce){
+  .machine-alert, .machine-done{ animation:none; }
+  .md-check svg path{ animation:none; stroke-dashoffset:0; }
+  .ma-led{ animation:none; }
+  .machine-plug, .mc-wire, .mc-live{ transition:none; }
+}

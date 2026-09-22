@@ -84,6 +84,11 @@
       else node.textContent = val;
     });
 
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-aria]'), function (node) {
+      var v = dict[node.getAttribute('data-i18n-aria')];
+      if (v) node.setAttribute('aria-label', v);
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('.lang-opt'), function (o) {
       o.classList.toggle('is-on', o.getAttribute('data-lang') === lang);
     });
@@ -348,6 +353,7 @@
       var handledAt = 0;
 
       form.addEventListener('keydown', function (e) {
+        if (machineEl && machineEl.classList.contains('is-unplugged')) return;
         var el = byCode[e.code];
         if (!el && e.key && e.key.length === 1) el = byChar[e.key.toLowerCase()];
         if (!el && e.key === ' ') el = byCode.Space;
@@ -360,6 +366,7 @@
          character that was actually inserted — but only when keydown did
          not already resolve the key, or a US layout would light two. */
       form.addEventListener('input', function (e) {
+        if (machineEl && machineEl.classList.contains('is-unplugged')) return;
         if (Date.now() - handledAt < 80) return;
         if (e.inputType && e.inputType.indexOf('delete') === 0) return press(byCode.Backspace);
         var d = e.data;
@@ -369,13 +376,125 @@
       });
     }
 
+    /* ── the plug ──────────────────────────────────────────────────────
+       It can be dragged out of the socket or simply clicked. With the plug
+       out the box has no power: the screen dims, the keyboard goes quiet
+       and the form refuses to submit until it is back in. */
+
+    var plugBtn = document.getElementById('machinePlug');
+    var alertBox = document.getElementById('machineAlert');
+    var fixBtn = document.getElementById('machineFix');
+    var plugged = true;
+    var inView = false;
+
+    function setPlugged(next) {
+      plugged = !!next;
+      if (machineEl) machineEl.classList.toggle('is-unplugged', !plugged);
+      if (alertBox) alertBox.hidden = plugged;
+      if (plugBtn) {
+        plugBtn.setAttribute('aria-pressed', plugged ? 'true' : 'false');
+        var dict = (window.I18N || {})[lang] || {};
+        var label = plugged ? dict['mch.unplugAria'] : dict['mch.plugAria'];
+        if (label) plugBtn.setAttribute('aria-label', label);
+      }
+      /* Fields stay reachable by keyboard but cannot be filled with no
+         power. readOnly is the gentler option, but it does nothing for a
+         checkbox or a select, so those get disabled outright. */
+      if (form) {
+        Array.prototype.forEach.call(form.elements, function (el) {
+          var t = el.type;
+          if (t === 'submit' || t === 'checkbox' || t === 'radio' || el.tagName === 'SELECT') {
+            el.disabled = !plugged;
+          } else {
+            el.readOnly = !plugged;
+          }
+        });
+      }
+
+      // with the plug out there is nothing to animate
+      if (machineEl && !plugged) machineEl.classList.remove('is-live');
+      else if (machineEl && inView) machineEl.classList.add('is-live');
+    }
+    window.RDW_SET_PLUG = setPlugged;
+
+    if (plugBtn) {
+      var dragging = false, sx = 0, sy = 0, moved = 0;
+
+      plugBtn.addEventListener('pointerdown', function (e) {
+        dragging = true; moved = 0;
+        sx = e.clientX; sy = e.clientY;
+        try { plugBtn.setPointerCapture(e.pointerId); } catch (err) { /* older engines */ }
+      });
+
+      plugBtn.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        moved = Math.max(moved, Math.hypot(e.clientX - sx, e.clientY - sy));
+        // pulling away from the socket unplugs it part way through the drag
+        if (plugged && moved > 26) { setPlugged(false); dragging = false; }
+      });
+
+      plugBtn.addEventListener('pointerup', function (e) {
+        if (!dragging) return;
+        dragging = false;
+        try { plugBtn.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+        if (moved <= 6) setPlugged(!plugged);      // a tap toggles
+      });
+
+      plugBtn.addEventListener('pointercancel', function () { dragging = false; });
+      plugBtn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPlugged(!plugged); }
+      });
+    }
+
+    if (fixBtn) {
+      fixBtn.addEventListener('click', function () {
+        setPlugged(true);
+        var first = form && form.querySelector('input, textarea');
+        if (first) first.focus();
+      });
+    }
+
+    setPlugged(true);
+
+    /* ── confirmation on the screen ──────────────────────────────────── */
+
+    var donePanel = document.getElementById('machineDone');
+    var againBtn = document.getElementById('machineAgain');
+
+    window.RDW_MACHINE = {
+      isPlugged: function () { return plugged; },
+      fault: function () {
+        if (!alertBox) return;
+        alertBox.hidden = false;
+        alertBox.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+      },
+      done: function () {
+        if (!donePanel) return;
+        donePanel.hidden = false;
+      }
+    };
+
+    if (againBtn) {
+      againBtn.addEventListener('click', function () {
+        if (donePanel) donePanel.hidden = true;
+        if (form) {
+          form.reset();
+          var first = form.querySelector('input');
+          if (first) first.focus();
+        }
+        var status = document.getElementById('formStatus');
+        if (status) { status.textContent = ''; status.className = 'form-status'; }
+      });
+    }
+
     /* the machine powers up when it comes into view */
     if (machineEl) {
       if (!('IntersectionObserver' in window)) machineEl.classList.add('is-live');
       else {
         new IntersectionObserver(function (entries) {
           entries.forEach(function (en) {
-            machineEl.classList.toggle('is-live', en.intersectionRatio > 0.12);
+            inView = en.intersectionRatio > 0.12;
+            machineEl.classList.toggle('is-live', inView && plugged);
           });
         }, { threshold: [0, 0.12, 0.4] }).observe(machineEl);
       }
@@ -397,6 +516,16 @@
       e.preventDefault();
       var dict = (window.I18N || {})[lang] || {};
 
+      var M = window.RDW_MACHINE;
+      if (M && !M.isPlugged()) {
+        M.fault();
+        if (status) {
+          status.textContent = dict['mch.errShort'] || '';
+          status.className = 'form-status err';
+        }
+        return;
+      }
+
       if (!form.checkValidity()) {
         form.reportValidity();
         if (status) { status.textContent = dict['ct.err'] || ''; status.className = 'form-status err'; }
@@ -417,7 +546,8 @@
       window.location.href = 'mailto:' + TARGET_MAIL +
         '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 
-      if (status) { status.textContent = dict['ct.ok'] || ''; status.className = 'form-status ok'; }
+      if (status) { status.textContent = ''; status.className = 'form-status'; }
+      if (window.RDW_MACHINE) window.RDW_MACHINE.done();
     });
   }
 

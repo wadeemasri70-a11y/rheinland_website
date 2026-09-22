@@ -434,12 +434,30 @@
 
     <div class="machine">
       <!-- power feed: the same idea as the hero, the box is plugged in -->
-      <div class="machine-power" aria-hidden="true">
-        <span class="machine-socket"><i></i><i></i></span>
-        <svg class="machine-cable" viewBox="0 0 300 62" preserveAspectRatio="none">
+      <div class="machine-power">
+        <span class="machine-socket" aria-hidden="true"><i></i><i></i></span>
+        <svg class="machine-cable" viewBox="0 0 300 62" preserveAspectRatio="none" aria-hidden="true">
           <path class="mc-wire" d="M283 20 C 250 52, 196 30, 140 44 C 84 58, 44 44, 8 60"/>
           <path class="mc-live" d="M283 20 C 250 52, 196 30, 140 44 C 84 58, 44 44, 8 60"/>
         </svg>
+        <button class="machine-plug" id="machinePlug" type="button" aria-pressed="true"
+                data-i18n-aria="mch.unplugAria" aria-label="Stecker herausziehen">
+          <svg viewBox="0 0 34 30" aria-hidden="true">
+            <rect class="pl-prong" x="8"  y="0" width="4" height="9" rx="2"/>
+            <rect class="pl-prong" x="22" y="0" width="4" height="9" rx="2"/>
+            <rect class="pl-body" x="2" y="7" width="30" height="20" rx="6"/>
+            <rect class="pl-grip" x="9" y="14" width="16" height="2.4" rx="1.2"/>
+            <rect class="pl-grip" x="9" y="19" width="16" height="2.4" rx="1.2"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- shown when the plug is out: this sits above the box on purpose -->
+      <div class="machine-alert" id="machineAlert" role="alert" hidden>
+        <span class="ma-led" aria-hidden="true"></span>
+        <strong class="ma-code">ERROR 007</strong>
+        <span class="ma-text" data-i18n="mch.err">Kein Strom. Bitte den Stecker wieder einstecken.</span>
+        <button class="ma-fix" type="button" id="machineFix" data-i18n="mch.plugIn">Stecker einstecken</button>
       </div>
 
       <div class="machine-body">
@@ -497,6 +515,15 @@
       <button class="btn btn-primary btn-block" type="submit" data-i18n="ct.submit">Anfrage senden</button>
       <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
     </form>
+          <div class="machine-done" id="machineDone" hidden>
+            <span class="md-check" aria-hidden="true">
+              <svg viewBox="0 0 34 34"><path d="M8 17.5l6 6 12-13" fill="none" stroke="currentColor"
+                stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3 data-i18n="mch.doneTitle">Anfrage fertig</h3>
+            <p data-i18n="mch.doneBody">Ihr E-Mail-Programm wurde mit der fertigen Anfrage geöffnet — bitte nur noch absenden.</p>
+            <button class="btn btn-ghost btn-sm" type="button" id="machineAgain" data-i18n="mch.doneAgain">Neue Anfrage</button>
+          </div>
         </div><!-- /machine-viewport -->
       </div><!-- /machine-body -->
 

@@ -124,6 +124,35 @@ das eingefügte Zeichen, der nur greift, wenn der erste nichts gefunden hat
 Der Rechner „geht an“, sobald er ins Bild kommt: Die Leuchtdiode pulst und
 ein Lichtpunkt wandert durch das Kabel.
 
+### Der Stecker
+
+Der Stecker lässt sich aus der Dose ziehen — mit der Maus, mit dem Finger
+oder per Tastatur. Ohne Strom schaltet der Rechner ab: Über dem Kasten
+erscheint eine rote Meldung mit `ERROR 007`, die Leuchtdiode wird rot, der
+Bildschirm wird flau und bekommt einen roten Schimmer, die Tastatur reagiert
+nicht mehr, und das Formular lässt sich nicht absenden. Ein Klick auf den
+Stecker oder auf „Stecker einstecken“ stellt alles wieder her.
+
+Die Felder werden dabei auf `readonly` gesetzt statt auf `disabled`: Sie
+bleiben vorlesbar und mit der Tastatur erreichbar, nehmen aber nichts an.
+Für das Kontrollkästchen und die Auswahlliste greift `readonly` nicht, die
+werden deaktiviert.
+
+Ein Fallstrick, der zweimal Zeit gekostet hat: Ein `display` in einer
+Klassenregel schlägt das `[hidden]`-Attribut. Beide Einblendungen — die
+Störungsmeldung und die Bestätigung — brauchen deshalb eine eigene Regel
+`[hidden]{ display:none }`, sonst sind sie immer sichtbar und fangen
+nebenbei die Klicks auf den Stecker ab.
+
+### Die Bestätigung
+
+Nach dem Absenden legt sich eine Bestätigung über den Bildschirm. Sie ist
+bewusst so formuliert, wie es der Stand der Technik hergibt: Das Formular
+öffnet das E-Mail-Programm, verschickt aber noch nichts selbst. Sobald ein
+echter Endpunkt angebunden ist (siehe unten), sollte der Text auf eine
+tatsächliche Sendebestätigung geändert werden — `mch.doneTitle` und
+`mch.doneBody` in `assets/js/i18n.js`.
+
 ## Themes
 
 Der Nachtmodus hat etwas mehr Bewegung als der Tagmodus: Staub treibt durch
@@ -164,7 +193,8 @@ weiterer Block.
       fachkundig prüfen lassen
 - [ ] Kontaktformular an einen echten Endpunkt hängen. Aktuell baut
       `main.js` eine fertige `mailto:`-Nachricht; auszutauschen ist nur der
-      `submit`-Handler
+      `submit`-Handler. Danach `mch.doneTitle` und `mch.doneBody` auf eine
+      echte Sendebestätigung umformulieren
 - [ ] Optional Schriften lokal einbinden statt über Google Fonts — spart den
       entsprechenden Abschnitt in der Datenschutzerklärung
 - [ ] Portfolio: Die sechs Einträge sind ausdrücklich als Musterprojekte
