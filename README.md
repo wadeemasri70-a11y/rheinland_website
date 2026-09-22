@@ -67,10 +67,24 @@ erweitert:
   Änderung am Hüpfen den Rest automatisch nachzieht.
 - **Auf welche Tasten der Roboter springt** bestimmt `HOP_KEYS`; pro Sprung
   wird eine Zeile aus `CODE` getippt.
+- **Die Form eines Sprungs** steckt in `AP` und `FLIGHT`: erst hockt sich der
+  Roboter an Ort und Stelle hin, dann fliegt er mit gleichbleibender
+  waagerechter Geschwindigkeit auf einer Wurfparabel, dann federt er die
+  Landung ab. Die Waagerechte wurde früher mit ein- und ausklingender
+  Kurve interpoliert — der Roboter bremste also mitten in der Luft ab, was
+  der Hauptgrund für den schwebenden Eindruck war.
+- **`gait`** blendet zwischen Stehen und Gehen über und skaliert Schrittweite,
+  Wippen und Neigung. Ohne das sprangen die Beine beim ersten Schritt in die
+  Mitte des Zyklus und beim letzten stramm auf null.
 - **Kamera und Bildausschnitt**: `new E.Camera({...})` in `scene3d.js`.
   `shiftX` verschiebt den Bildmittelpunkt, ohne die Perspektive zu verzerren
   — so sitzen die Objekte links und die Überschrift rechts. Auf schmalen
   Bildschirmen setzt `hero3d.js` die Verschiebung zurück.
+- **Die RGB-Beleuchtung** der Tastatur fährt hoch, sobald der Roboter zu
+  tippen beginnt (`st.rgb` in `anim3d.js`, `backlight()` und `rgbGlow()` in
+  `scene3d.js`). Jede Taste hat ein eigenes Materialobjekt, dessen Farbe pro
+  Bild gesetzt wird; eine Farbwelle läuft anhand der Position über das
+  Brett. Geometrie wird dafür nicht angefasst.
 - **Farben und Licht** stehen in `MAT` und `THEMES` in `scene3d.js`.
   `MAT.screen` ist der einzige Eintrag, der pro Bild verändert wird: Er
   blendet zwischen dunklem und laufendem Bildschirm um, weil emittierende
@@ -152,6 +166,20 @@ bewusst so formuliert, wie es der Stand der Technik hergibt: Das Formular
 echter Endpunkt angebunden ist (siehe unten), sollte der Text auf eine
 tatsächliche Sendebestätigung geändert werden — `mch.doneTitle` und
 `mch.doneBody` in `assets/js/i18n.js`.
+
+## Überschrift und Kennzahlen
+
+Der erste Buchstabe jedes Worts in der großen Überschrift steht im Orange
+des Logos, ebenso die vier Kennzahlen. Die Überschrift wird bei jedem
+Sprachwechsel neu geschrieben, deshalb setzt `decorateInitials()` in
+`main.js` die Auszeichnung danach erneut und merkt sich den unveränderten
+Text am Knoten, damit ein zweiter Durchlauf nicht bereits ausgezeichneten
+Text noch einmal zerlegt.
+
+Eine Stolperstelle dabei: `.hero-title span { display:block }` galt für
+*jeden* Span in der Überschrift, also auch für die neuen Buchstaben-Spans —
+jedes Wort brach dadurch nach dem ersten Buchstaben um. Die Regel gilt jetzt
+nur für die direkten Kinder.
 
 ## Themes
 

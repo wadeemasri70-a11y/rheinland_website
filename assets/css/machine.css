@@ -194,13 +194,15 @@
 .machine-plug:hover .pl-body{ stroke:var(--accent); }
 
 /* pulled out: the plug drops away from the socket and the lead goes slack */
-.machine.is-unplugged .machine-plug{ transform:translate(-26px, 34px) rotate(-16deg); }
+.machine.is-unplugged .machine-plug{ transform:translate(0, 40px); }
 .machine.is-unplugged .pl-prong{ fill:#D9534F; opacity:1; }
 
 .mc-wire, .mc-live{ transition:d .42s var(--ease); }
+/* the lead keeps the same shape and just pays out a little more slack, so
+   the pulled plug looks put down rather than dropped */
 .machine.is-unplugged .mc-wire,
 .machine.is-unplugged .mc-live{
-  d:path("M258 52 C 236 66, 194 42, 140 48 C 84 60, 44 44, 8 60");
+  d:path("M283 58 C 252 62, 196 38, 140 46 C 84 58, 44 44, 8 60");
 }
 .machine.is-unplugged .mc-live{ opacity:0 !important; animation:none !important; }
 

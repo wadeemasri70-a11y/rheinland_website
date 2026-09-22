@@ -21,7 +21,9 @@
     chart: '<path d="M4 19V7M10 19V4M16 19v-8M22 19H2"/>',
     mail:  '<rect x="2.6" y="5" width="18.8" height="14" rx="2.4"/><path d="M3.4 6.6L12 13l8.6-6.4"/>',
     phone: '<path d="M6.2 3.5h3l1.6 4-2 1.4a12.5 12.5 0 0 0 6.3 6.3l1.4-2 4 1.6v3a2 2 0 0 1-2.2 2A17.6 17.6 0 0 1 4.2 5.7a2 2 0 0 1 2-2.2z"/>',
-    pin:   '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>'
+    pin:   '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
+    app:   '<rect x="6.5" y="2.2" width="11" height="19.6" rx="2.6"/><path d="M10.5 5.2h3"/><circle cx="12" cy="18.6" r=".9" fill="currentColor"/>',
+    audio: '<path d="M4 14v-4M8 17.5v-11M12 20V4M16 17.5v-11M20 14v-4"/>'
   };
 
   Array.prototype.forEach.call(document.querySelectorAll('[data-ico]'), function (host) {
@@ -82,6 +84,7 @@
       if (val === undefined) return;
       if (val.indexOf('<a ') !== -1) node.innerHTML = val;   // a few strings carry a link
       else node.textContent = val;
+      if (node.hasAttribute('data-initials')) node.removeAttribute('data-plain');
     });
 
     Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-aria]'), function (node) {
@@ -93,6 +96,7 @@
       o.classList.toggle('is-on', o.getAttribute('data-lang') === lang);
     });
 
+    refreshInitials();
     updateThemeLabel();
     if (persist) { try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ } }
   }
@@ -117,6 +121,40 @@
     // is offered as a switch, not guessed from the browser.
     applyLang(savedLang === 'en' ? 'en' : 'de', false);
   }());
+
+  /* ── initials in the headline ────────────────────────────────────────
+     The first letter of each word picks up the orange from the logo. The
+     headline is rewritten on every language switch, so this runs again
+     afterwards. The original text is kept on the node so repeated runs
+     never decorate an already-decorated string. */
+
+  function decorateInitials(node) {
+    if (!node) return;
+    var text = node.getAttribute('data-plain');
+    if (text === null) {
+      text = node.textContent;
+      node.setAttribute('data-plain', text);
+    }
+    var out = '';
+    var atWordStart = true;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      var isLetter = /[\p{L}\p{N}]/u.test(ch);
+      if (isLetter && atWordStart) {
+        out += '<span class="cap">' + ch.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>';
+        atWordStart = false;
+      } else {
+        out += ch.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        if (!isLetter) atWordStart = true;
+      }
+    }
+    node.innerHTML = out;
+  }
+
+  function refreshInitials() {
+    Array.prototype.forEach.call(
+      document.querySelectorAll('[data-initials]'), decorateInitials);
+  }
 
   /* ── header ──────────────────────────────────────────────────────── */
 

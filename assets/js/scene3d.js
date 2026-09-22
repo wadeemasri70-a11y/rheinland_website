@@ -168,7 +168,10 @@
         if (ri === 4) w = (j === 2) ? 9.5 : 3.0;
         if (ri === 4) z = [-11.5, -6.5, 0, 6.5, 11.5][j];
         var k = { x: row.x, z: z, w: w, d: row.d, ri: ri };
-        k.faces = E.box([row.x, 1.85, z], [row.d, 0.95, w], MAT.key, { bottom: true });
+        /* every key carries its own material object so the backlight can
+           tint them one at a time without cloning geometry */
+        k.mat = { n: MAT.key.n.slice(), d: MAT.key.d.slice(), layer: 2 };
+        k.faces = E.box([row.x, 1.85, z], [row.d, 0.95, w], k.mat, { bottom: true });
         KEYS.push(k);
         faces = faces.concat(k.faces);
       }
@@ -717,6 +720,74 @@
     ctx.restore();
   }
 
+  /* ── RGB keyboard backlight ──────────────────────────────────────────
+     A hue wave runs across the keyboard once the robot starts typing. Keys
+     are tinted by mutating their own material, so no geometry is rebuilt
+     and the painter's sort is untouched. */
+
+  function hsl(h, sat, lum, out) {
+    h = ((h % 360) + 360) / 360;
+    var c = (1 - Math.abs(2 * lum - 1)) * sat;
+    var x = c * (1 - Math.abs(((h * 6) % 2) - 1));
+    var m = lum - c / 2;
+    var r = 0, g = 0, b = 0, seg = Math.floor(h * 6) % 6;
+    if (seg === 0) { r = c; g = x; }
+    else if (seg === 1) { r = x; g = c; }
+    else if (seg === 2) { g = c; b = x; }
+    else if (seg === 3) { g = x; b = c; }
+    else if (seg === 4) { r = x; b = c; }
+    else { r = c; b = x; }
+    out[0] = (r + m) * 255; out[1] = (g + m) * 255; out[2] = (b + m) * 255;
+    return out;
+  }
+
+  var _hsl = [0, 0, 0];
+
+  function backlight(state) {
+    var amt = state && state.rgb ? state.rgb : 0;
+    var now = (state && state.rgbT) || 0;
+    for (var i = 0; i < KEYS.length; i++) {
+      var k = KEYS[i], m = k.mat;
+      if (amt <= 0.002) {
+        m.n[0] = MAT.key.n[0]; m.n[1] = MAT.key.n[1]; m.n[2] = MAT.key.n[2];
+        m.d[0] = MAT.key.d[0]; m.d[1] = MAT.key.d[1]; m.d[2] = MAT.key.d[2];
+        continue;
+      }
+      // hue follows the key's place along the board, so the wave travels
+      var hue = (now * 0.045) + k.z * 7 + k.ri * 26;
+      hsl(hue, 0.85, 0.52, _hsl);
+      for (var c = 0; c < 3; c++) {
+        m.n[c] = MAT.key.n[c] + (_hsl[c] - MAT.key.n[c]) * amt * 0.92;
+        m.d[c] = MAT.key.d[c] + (_hsl[c] - MAT.key.d[c]) * amt * 0.55;
+      }
+    }
+  }
+
+  /* underglow spilling from beneath the laptop onto the desk */
+  function rgbGlow(ctx, state) {
+    var amt = state && state.rgb ? state.rgb : 0;
+    if (amt <= 0.01) return;
+    var now = (state && state.rgbT) || 0;
+    for (var i = 0; i < 3; i++) {
+      var off = i * 11 - 11;
+      var p = proj(E.xform(laptop.world, [6, 0.4, off * 1.6]));
+      var e = proj(E.xform(laptop.world, [22, 0.4, off * 1.6]));
+      if (!p || !e) continue;
+      var r = Math.max(14, Math.abs(e.x - p.x) * 1.5);
+      hsl(now * 0.045 + off * 11, 0.9, 0.55, _hsl);
+      var rgb = (_hsl[0] | 0) + ',' + (_hsl[1] | 0) + ',' + (_hsl[2] | 0);
+      var g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+      g.addColorStop(0, 'rgba(' + rgb + ',' + (0.30 * amt).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(' + rgb + ',0)');
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.translate(p.x, p.y); ctx.scale(1, 0.4); ctx.translate(-p.x, -p.y);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 6.2832); ctx.fill();
+      ctx.restore();
+    }
+  }
+
   function renderFrame(state) {
     var ctx = renderer.ctx, w = renderer.w, h = renderer.h;
 
@@ -745,12 +816,14 @@
       MAT.screen.d[ci] = SCREEN_ON.d[ci] + (SCREEN_OFF.d[ci] - SCREEN_ON.d[ci]) * (1 - sp);
     }
 
+    backlight(state);
+
     // light the key the robot just landed on
     var lk = state && state.litKey >= 0 ? KEYS[state.litKey] : null;
     if (lk) { for (var q = 0; q < lk.faces.length; q++) lk.faces[q].mat = MAT.keyLit; }
 
     collect(world);
-    if (lk) { for (var q2 = 0; q2 < lk.faces.length; q2++) lk.faces[q2].mat = MAT.key; }
+    if (lk) { for (var q2 = 0; q2 < lk.faces.length; q2++) lk.faces[q2].mat = lk.mat; }
 
     pushCable(state || {});
     pushScreen(state || {});
@@ -774,6 +847,7 @@
     }
 
     sparkPass(ctx, state || {});
+    rgbGlow(ctx, state || {});
     emissivePass(ctx, state);
     if (state && state.flash) {
       ctx.save();

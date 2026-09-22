@@ -145,6 +145,11 @@
   /* ── per-frame state ─────────────────────────────────────────────── */
 
   var walkPhase = 0;
+  var gait = 0;             // 0 standing, 1 walking; smoothed so legs never snap
+
+  /* shape of one hop, as fractions of the beat */
+  var AP = 0.17;            // crouch before the push
+  var FLIGHT = 0.66;        // time off the ground
 
   function update(t, dt) {
     var st = { shadow: 1, socket: 0, screen: 0, eyeGlow: 1, core: 1, fade: 0, litKey: -1 };
@@ -154,7 +159,7 @@
     else if (t > T.restTo) st.fade = clamp01((t - T.restTo) / (T.fadeTo - T.restTo));
 
     var x, z = -4, face = Math.PI, ground = 0, scale = 1;
-    var hopIndex = -1, hopP = 0, onKeys = false;
+    var hopIndex = -1, hopP = 0, onKeys = false, hopArc = 0;
     var lift = 0, lean = 0, roll = 0, tip = 0;
 
     /* ---- where is the robot ---- */
@@ -187,26 +192,44 @@
         var a = keyWorld(KEYS[HOP_KEYS[Math.min(HOP_KEYS.length - 1, hopIndex)]]);
         var b = keyWorld(KEYS[HOP_KEYS[Math.min(HOP_KEYS.length - 1, hopIndex + 1)]]);
 
-        /* the hop reads as: sink, spring, float, land, absorb, recover */
-        var move = Ease.inOut(clamp01((hopP - 0.16) / 0.66));
+        /* A hop is three distinct things, and easing the whole beat with
+           one curve made all of them mushy:
+
+             crouch   — the robot sinks in place, going nowhere
+             flight   — constant horizontal speed, vertical on a parabola
+             recovery — the landing is absorbed, then it straightens up
+
+           The horizontal used to be eased in and out, which had the robot
+           decelerating in mid-air. Nothing decelerates in mid-air, and it
+           was the main reason the hops looked floaty. */
+
+        var fatigue = hopIndex / Math.max(1, HOPS - 1);
+        var H = lerp(3.4, 2.1, fatigue);      // later hops are lower
+        var CROUCH = 0.9, LAND = 0.7;
+
+        var move, arc = 0;
+        if (hopP < AP) {
+          move = 0;
+          lift = -CROUCH * Math.sin((hopP / AP) * Math.PI / 2);
+        } else if (hopP < AP + FLIGHT) {
+          var q = (hopP - AP) / FLIGHT;
+          move = q;                                    // constant speed
+          arc = 4 * q * (1 - q);                       // parabola, peaks at 1
+          lift = -CROUCH * (1 - q) * (1 - q) + H * arc;
+        } else {
+          var r = (hopP - AP - FLIGHT) / (1 - AP - FLIGHT);
+          move = 1;
+          lift = -LAND * Math.sin(r * Math.PI);        // absorb, then stand
+        }
+
         x = lerp(a[0], b[0], move);
         z = lerp(a[2], b[2], move);
         ground = lerp(a[1], b[1], move);
+        hopArc = arc;
 
-        /* later hops get lower and heavier as the robot tires */
-        var fatigue = hopIndex / Math.max(1, HOPS - 1);
-        var H = lerp(3.3, 1.9, fatigue);
-
-        lift = track([
-          [0,    0,     'linear'],
-          [0.16, -0.75, 'out'],     // crouch, gathering
-          [0.50, H,     'out'],     // apex
-          [0.82, 0,     'in'],      // touchdown
-          [0.90, -0.55, 'out'],     // absorb
-          [1,    0,     'soft']     // stand up
-        ], hopP);
-
-        lean = 9 * Math.sin(hopP * Math.PI * 2) * (1 - fatigue * 0.4);
+        // lean forward into the hop, upright again by the landing
+        lean = 7.5 * Math.sin(Math.min(1, hopP / (AP + FLIGHT)) * Math.PI) * (1 - fatigue * 0.35);
+        if (hopP < AP + 0.08) st.litKey = HOP_KEYS[Math.min(HOP_KEYS.length - 1, hopIndex)];
         if (hopP < 0.30) st.litKey = HOP_KEYS[Math.min(HOP_KEYS.length - 1, hopIndex)];
       } else {
         var last = keyWorld(KEYS[HOP_KEYS[Math.min(HOP_KEYS.length - 1, HOPS)]]);
@@ -259,19 +282,29 @@
       ], t);
     }
 
-    /* ---- gait ---- */
+    /* ---- gait ────────────────────────────────────────────────────────
+       Walking used to switch on and off between two frames, so the legs
+       jumped to mid-stride on the first step and snapped straight on the
+       last. `gait` eases between the two states and scales every part of
+       the walk, which also lets the cycle wind down in place. */
+
     var walking = (t > T.walkFrom && t < T.walkTo) || (t > T.turn + 700 && t < T.runTo);
     var speed = t < T.walkTo ? 0.85 : 1.2;
-    walkPhase += dt * (walking ? 0.0060 * speed : 0.0004);
 
-    var stride = Math.sin(walkPhase);
-    if (walking) {
+    gait += ((walking ? 1 : 0) - gait) * Math.min(1, dt * 0.007);
+    if (gait < 0.002) gait = 0;
+
+    walkPhase += dt * (0.0060 * speed * gait + 0.0004);
+
+    var stride = Math.sin(walkPhase) * gait;
+    if (gait > 0) {
       /* body dips onto each footfall and sways a little side to side */
       lift += -Math.abs(stride) * 0.50 * speed;
-      lean += 2.4 * speed;
-      roll += Math.cos(walkPhase) * 2.2 * speed;
-    } else if (!onKeys || t < T.hopTo) {
-      lift += Math.sin(t * 0.0016) * 0.16;   // idle breathing
+      lean += 2.4 * speed * gait;
+      roll += Math.cos(walkPhase) * 2.2 * speed * gait;
+    }
+    if (gait < 0.9 && (!onKeys || t < T.hopTo)) {
+      lift += Math.sin(t * 0.0016) * 0.16 * (1 - gait);   // idle breathing
     }
 
     var yy = ground + lift;
@@ -290,7 +323,10 @@
     st.shadowWide = tip > 0.6 ? 1.7 : 1;
 
     /* ---- limbs ---- */
-    var airborne = hopIndex >= 0 ? clamp01(lift / 3.3)
+    /* How far off the ground the robot is, 0..1. Taken from the arc rather
+       than from `lift`, because the hop height drops as the robot tires and
+       dividing by a fixed height left the late hops with limp legs. */
+    var airborne = hopIndex >= 0 ? hopArc
                  : (t >= T.runTo && t <= T.climbTo) ? Math.sin((t - T.runTo) / (T.climbTo - T.runTo) * Math.PI) : 0;
 
     if (tip > 0.05) {
@@ -301,17 +337,19 @@
       rig.armF.setTRS([E.trans(0, 5.6, 4.3), E.rotZ(0.85 * sp), E.rotX(0.22 * sp)]);
       rig.armB.setTRS([E.trans(0, 5.6, -4.3), E.rotZ(0.70 * sp), E.rotX(-0.18 * sp)]);
     } else if (airborne > 0.03) {
-      rig.legF.setTRS([E.trans(0, 4.4, 2.1), E.rotZ(-0.62 * airborne)]);
-      rig.legB.setTRS([E.trans(0, 4.4, -2.1), E.rotZ(0.48 * airborne)]);
-      rig.armF.setTRS([E.trans(0, 5.6, 4.3), E.rotZ(-0.95 - 1.15 * airborne)]);
-      rig.armB.setTRS([E.trans(0, 5.6, -4.3), E.rotZ(-0.80 - 1.25 * airborne)]);
+      /* legs tuck on the way up and reach for the surface on the way down */
+      var tuck = Math.pow(airborne, 0.7);
+      rig.legF.setTRS([E.trans(0, 4.4, 2.1), E.rotZ(-0.66 * tuck)]);
+      rig.legB.setTRS([E.trans(0, 4.4, -2.1), E.rotZ(0.50 * tuck)]);
+      rig.armF.setTRS([E.trans(0, 5.6, 4.3), E.rotZ(-0.42 - 0.78 * tuck)]);
+      rig.armB.setTRS([E.trans(0, 5.6, -4.3), E.rotZ(-0.30 - 0.86 * tuck)]);
     } else {
-      var legRad = stride * (walking ? 17 * speed : 0) * Math.PI / 180;
+      var legRad = stride * 17 * speed * Math.PI / 180;
       rig.legF.setTRS([E.trans(0, 4.4, 2.1), E.rotZ(legRad)]);
       rig.legB.setTRS([E.trans(0, 4.4, -2.1), E.rotZ(-legRad)]);
 
       /* arms trail the legs by a beat, which stops the walk looking mechanical */
-      var armRad = Math.sin(walkPhase - 0.42) * (walking ? 13 * speed : 0) * Math.PI / 180;
+      var armRad = Math.sin(walkPhase - 0.42) * gait * 13 * speed * Math.PI / 180;
 
       /* the near arm lifts the plug to the socket between reach and contact */
       var lifting = t > T.walkTo && t < T.contact + 1400;
@@ -392,6 +430,13 @@
       [T.markOut - 400, 1, 'linear'], [T.markOut, 0, 'soft']
     ], t);
 
+    /* ---- the laptop turns into a modern RGB machine ----
+       It boots as a plain grey box; once the robot starts writing code the
+       keyboard lighting comes up. The ramp is slow on purpose so it reads
+       as the machine waking up rather than as a light switch. */
+    st.rgb = clamp01((t - T.hopFrom + 400) / 2600) * (t > T.fadeTo - 900 ? clamp01((T.fadeTo - t) / 900) : 1);
+    st.rgbT = t;
+
     /* ---- typing: one line per hop ---- */
     st.lines = [];
     for (var i = 0; i < CODE.length; i++) {
@@ -402,7 +447,7 @@
     return st;
   }
 
-  function reset() { walkPhase = 0; antA = 0; antV = 0; prevY = null; prevVel = 0; }
+  function reset() { walkPhase = 0; gait = 0; antA = 0; antV = 0; prevY = null; prevVel = 0; }
 
   window.RDW_ANIM = {
     T: T, update: update, reset: reset,
