@@ -14,6 +14,7 @@ datenschutz.html      Datenschutzerklärung (Grundfassung, Platzhalter)
 
 assets/css/main.css   Design-Tokens beider Themes, Layout, alle Sektionen
 assets/css/hero.css   Bühne der Hero-Szene
+assets/css/media.css   Markenband und die Bilder in den Abschnitten
 assets/css/machine.css Kontaktformular als Rechner samt Tastatur
 
 assets/js/engine3d.js 3D-Kern: Transformhierarchie, Projektion, Sortierung
@@ -196,6 +197,34 @@ Eine Stolperstelle dabei: `.hero-title span { display:block }` galt für
 *jeden* Span in der Überschrift, also auch für die neuen Buchstaben-Spans —
 jedes Wort brach dadurch nach dem ersten Buchstaben um. Die Regel gilt jetzt
 nur für die direkten Kinder.
+
+## Bilder
+
+Fünf Aufnahmen, alle als WebP mit zusammen rund 340 KB (aus gut 4 MB
+Ausgangsmaterial):
+
+| Datei | Platz |
+|---|---|
+| `brand-wall.webp` | Markenband direkt unter dem Hero |
+| `team-workshop.webp` | über den sechs Schritten |
+| `team-desks.webp` | über dem Portfolio |
+| `team-meeting.webp` | neben den Zielgruppen |
+| `team-advice.webp` | im Buchhaltungsbereich |
+
+Jedes Bild sitzt in einem Rahmen, der es beschneidet, und ist etwas größer
+als dieser Rahmen — dadurch kann es beim Scrollen wandern. Die Verschiebung
+schreibt ein einziger Scroll-Handler über eine rAF-Schleife in die
+Eigenschaft `--py`; gemessen wird nur beim Laden und beim Größenwechsel,
+nie während des Schreibens. Der Weg ist begrenzt, damit das Bild nie über
+seinen Rahmen hinausrutscht. Sichtbar wird ein Bild über einen Schnitt am
+Rahmen statt über eine Blende.
+
+Im Nachtmodus werden die Aufnahmen abgedunkelt und leicht entsättigt. Es
+sind Tageslichtbilder; ungefiltert säßen sie sichtbar in einem anderen Raum
+als der Rest der Seite.
+
+Die Alternativtexte hängen wie die Beschriftungen an den Sprachdateien
+(`data-i18n-alt`).
 
 ## Themes
 

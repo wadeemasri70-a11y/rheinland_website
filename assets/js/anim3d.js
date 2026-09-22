@@ -75,18 +75,21 @@
 
   var T = {
     walkFrom:  600,
-    walkTo:    5200,
-    reach:     6100,
-    contact:   6700,
-    pulseFrom: 6800,
-    pulseTo:   8600,
-    boot:      8500,
-    mark:      9200,
-    markOut:  10600,
-    turn:     10400,
-    runTo:    12600,
-    climbTo:  13600,
-    hopFrom:  13750,
+    walkTo:   2900,    // reaches the plug lying on the desk
+    grab:     3280,    // hand closes on it
+    pickTo:   4000,    // back upright, plug in hand
+    carryTo:  6000,    // carries it to the socket
+    reach:    6700,
+    contact:  7300,
+    pulseFrom:7400,
+    pulseTo:  9200,
+    boot:     9100,
+    mark:     9800,
+    markOut: 11200,
+    turn:    11000,
+    runTo:   13100,
+    climbTo: 14100,
+    hopFrom: 14250,
     hopEvery:  880
   };
 
@@ -120,6 +123,12 @@
 
   var WALK_FROM = 118, SOCKET_X = 15;
   var SOCK = S.SOCKET;
+
+  /* The plug starts on the desk beside the laptop. The robot walks in with
+     empty hands, crouches over it, picks it up and carries it to the wall —
+     which reads far better than having it arrive holding the thing. */
+  var PLUG_REST = [56, 1.8, 1];
+  var PICK_X = PLUG_REST[0] + 6.5;     // where the robot stands to reach it
 
   /* ── springy antenna ─────────────────────────────────────────────────
      A one-dimensional damped spring driven by the body's vertical
@@ -167,11 +176,34 @@
       x = track([
         [0, WALK_FROM, 'linear'],
         [T.walkFrom, WALK_FROM, 'linear'],
-        [T.walkTo, SOCKET_X, 'inOut'],
+        [T.walkTo, PICK_X, 'inOut'],      // up to the plug
+        [T.pickTo, PICK_X, 'linear'],     // stood over it, picking it up
+        [T.carryTo, SOCKET_X, 'inOut'],   // carries it to the wall
         [T.turn, SOCKET_X, 'linear']
       ], t);
-      z = track([[0, -4, 'linear'], [T.walkTo, SOCK[2] + 4, 'inOut']], t);
+      z = track([
+        [0, -2, 'linear'],
+        [T.walkTo, PLUG_REST[2] + 3.5, 'inOut'],
+        [T.pickTo, PLUG_REST[2] + 3.5, 'linear'],
+        [T.carryTo, SOCK[2] + 4, 'inOut']
+      ], t);
       face = Math.PI;
+
+      /* crouching over the plug */
+      if (t > T.walkTo - 200 && t < T.pickTo) {
+        lean += track([
+          [T.walkTo - 200, 0, 'linear'],
+          [T.grab, 27, 'out'],
+          [T.grab + 220, 24, 'linear'],
+          [T.pickTo, 0, 'soft']
+        ], t);
+        lift += track([
+          [T.walkTo - 200, 0, 'linear'],
+          [T.grab, -1.7, 'out'],
+          [T.grab + 220, -1.5, 'linear'],
+          [T.pickTo, 0, 'soft']
+        ], t);
+      }
     } else if (t < T.climbTo) {
       x = track([[T.turn, SOCKET_X, 'linear'], [T.runTo, S.LAPTOP.x - 22, 'inOut'],
                  [T.climbTo, S.LAPTOP.x - 22, 'linear']], t);
@@ -288,8 +320,10 @@
        last. `gait` eases between the two states and scales every part of
        the walk, which also lets the cycle wind down in place. */
 
-    var walking = (t > T.walkFrom && t < T.walkTo) || (t > T.turn + 700 && t < T.runTo);
-    var speed = t < T.walkTo ? 0.85 : 1.2;
+    var walking = (t > T.walkFrom && t < T.walkTo - 260)
+               || (t > T.pickTo && t < T.carryTo - 200)
+               || (t > T.turn + 700 && t < T.runTo);
+    var speed = t < T.carryTo ? 0.85 : 1.2;
 
     gait += ((walking ? 1 : 0) - gait) * Math.min(1, dt * 0.007);
     if (gait < 0.002) gait = 0;
@@ -352,11 +386,14 @@
       var armRad = Math.sin(walkPhase - 0.42) * gait * 13 * speed * Math.PI / 180;
 
       /* the near arm lifts the plug to the socket between reach and contact */
-      var lifting = t > T.walkTo && t < T.contact + 1400;
+      var lifting = t > T.walkTo - 200 && t < T.contact + 1400;
       var armF = track([
-        [T.walkTo, -armRad, 'linear'],
-        [T.walkTo + 250, 0.1, 'soft'],
-        [T.reach, -2.05, 'out'],
+        [T.walkTo - 200, -armRad, 'linear'],
+        [T.grab - 120, 0.62, 'out'],      // reaches down and forward
+        [T.grab + 180, 0.66, 'linear'],   // closes on the plug
+        [T.pickTo, 0.08, 'soft'],         // straightens, holding it
+        [T.carryTo, 0.05, 'linear'],      // carried at the side
+        [T.reach, -2.05, 'out'],          // up to the socket
         [T.contact, -2.28, 'out'],
         [T.contact + 700, -2.05, 'soft'],
         [T.contact + 1400, 0, 'soft']
@@ -372,7 +409,10 @@
     /* head: counter-bobs while walking, looks up at the socket, droops when tired */
     var tilt = track([
       [0, 0, 'linear'],
-      [T.walkTo, 0, 'linear'],
+      [T.walkTo - 300, 0, 'linear'],
+      [T.grab, 0.40, 'out'],            // looks down at the plug
+      [T.pickTo, 0.10, 'soft'],
+      [T.carryTo, 0, 'soft'],
       [T.reach, -0.32, 'out'],
       [T.contact + 700, -0.32, 'linear'],
       [T.turn, 0, 'soft'],
@@ -403,12 +443,24 @@
     st.core = (0.35 + 0.65 * lit) * (1 - tired * 0.35);
 
     /* ---- the plug ---- */
+    /* where the near hand is, near enough for the plug to sit in it */
+    function handAt(hy) {
+      return [x + 4.8 * Math.cos(face + 0.28), hy, z + 4.8 * -Math.sin(face + 0.28)];
+    }
+
     var pw;
-    if (t < T.walkTo + 200) {
-      pw = [x + 5.5 * Math.cos(face + 0.3), 3.2, z + 5.5 * -Math.sin(face + 0.3)];
+    if (t < T.grab) {
+      pw = PLUG_REST.slice();                       // lying on the desk
+    } else if (t < T.pickTo) {
+      var g = Ease.out(clamp01((t - T.grab) / (T.pickTo - T.grab)));
+      var h = handAt(3.4);
+      pw = [lerp(PLUG_REST[0], h[0], g), lerp(PLUG_REST[1], h[1], g), lerp(PLUG_REST[2], h[2], g)];
+    } else if (t < T.reach) {
+      pw = handAt(3.4);                             // carried
     } else if (t < T.contact) {
-      var pp = Ease.out(clamp01((t - T.walkTo - 200) / (T.contact - T.walkTo - 200)));
-      pw = [lerp(x + 5.5, SOCK[0] + 4.2, pp), lerp(3.2, SOCK[1], pp), lerp(z, SOCK[2], pp)];
+      var pp = Ease.out(clamp01((t - T.reach) / (T.contact - T.reach)));
+      var h2 = handAt(3.4);
+      pw = [lerp(h2[0], SOCK[0] + 4.2, pp), lerp(h2[1], SOCK[1], pp), lerp(h2[2], SOCK[2], pp)];
     } else {
       pw = [SOCK[0] + 3.4, SOCK[1], SOCK[2]];
     }

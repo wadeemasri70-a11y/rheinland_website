@@ -87,6 +87,11 @@
       if (node.hasAttribute('data-initials')) node.removeAttribute('data-plain');
     });
 
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-alt]'), function (node) {
+      var v = dict[node.getAttribute('data-i18n-alt')];
+      if (v) node.setAttribute('alt', v);
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-aria]'), function (node) {
       var v = dict[node.getAttribute('data-i18n-aria')];
       if (v) node.setAttribute('aria-label', v);
@@ -309,6 +314,58 @@
     }, { threshold: [0, 0.15, 0.6, 1] });
 
     items.forEach(function (it) { io.observe(it.el); });
+  }());
+
+  /* ── parallax on the photography ─────────────────────────────────────
+     Each frame clips an image that is taller than it is, so the picture can
+     drift within the frame as the page scrolls. One scroll listener feeds
+     one rAF pass and writes a custom property per element — no layout is
+     read during the write, so this never thrashes.
+     ──────────────────────────────────────────────────────────────────── */
+
+  (function parallax() {
+    var nodes = Array.prototype.slice.call(document.querySelectorAll('[data-parallax]'));
+    if (!nodes.length || reduced) return;
+
+    var items = nodes.map(function (el) {
+      return { el: el, depth: parseFloat(el.getAttribute('data-parallax')) || 0.1, top: 0, h: 0 };
+    });
+
+    var vh = window.innerHeight, ticking = false;
+
+    function measure() {
+      vh = window.innerHeight;
+      for (var i = 0; i < items.length; i++) {
+        var r = items[i].el.getBoundingClientRect();
+        items[i].top = r.top + window.scrollY;
+        items[i].h = r.height;
+      }
+    }
+
+    function apply() {
+      ticking = false;
+      var y = window.scrollY;
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        var centre = it.top + it.h / 2 - (y + vh / 2);
+        if (Math.abs(centre) > vh * 1.2) continue;      // nowhere near the viewport
+        // travel is capped so the image can never slide past its frame
+        var shift = Math.max(-1, Math.min(1, centre / vh)) * it.h * it.depth;
+        it.el.style.setProperty('--py', shift.toFixed(1) + 'px');
+      }
+    }
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(apply);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () { measure(); onScroll(); }, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { measure(); apply(); });
+    window.addEventListener('load', function () { measure(); apply(); });
+    measure(); apply();
   }());
 
   /* ── package buttons prefill the form ────────────────────────────── */
