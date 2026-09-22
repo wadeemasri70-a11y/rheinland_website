@@ -26,7 +26,11 @@
     if (startTime === null) { startTime = now; lastT = 0; }
     var t = now - startTime;
     draw(t);
-    if (t > A.T.end) startTime = now - A.T.end;   // hold the final, idle state
+    if (t > A.T.loop) {            // the robot has collapsed; run it again
+      startTime = now;
+      lastT = 0;
+      if (A.reset) A.reset();
+    }
     if (visible) raf = requestAnimationFrame(frame);
     else running = false;
   }
@@ -39,8 +43,10 @@
   }
 
   function still() {
-    // reduced motion: the finished scene, powered up and code written
-    var st = A.update(A.T.end, 16);
+    // reduced motion: the powered-up scene with the code written, held
+    // just before the robot tires out
+    var st = A.update(A.T.hopTo - 40, 16);
+    st.fade = 0;
     st.plugWorld = S.plugWorld;
     S.renderFrame(st);
   }

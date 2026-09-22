@@ -58,7 +58,8 @@
     visor:    M([16, 122, 140], [70, 176, 190], { emis: 1 }),
     eye:      M([150, 244, 252], [232, 252, 255], { emis: 1 }),
     core:     M([162, 84, 26],  [206, 112, 40], { emis: 1 }),
-    screen:   M([26, 62, 95],  [224, 233, 243], { emis: 1 })
+    screen:   M([26, 62, 95],  [224, 233, 243], { emis: 1 }),
+    screenOff:M([13, 20, 33],  [139, 148, 163], { emis: 1 })
   };
 
   var THEMES = {
@@ -207,10 +208,16 @@
       top: MAT.shellDk, bottom: MAT.shellDk, back: MAT.shellDk }))
     // ear pods
     .concat(E.box([-0.8, 3.5, 4.5], [2.8, 2.8, 1.0], MAT.joint))
-    .concat(E.box([-0.8, 3.5, -4.5], [2.8, 2.8, 1.0], MAT.joint))
-    // antenna
-    .concat(E.box([-2.2, 8.4, 0], [0.45, 2.4, 0.45], MAT.joint))
-    .concat(E.box([-2.2, 9.9, 0], [1.0, 1.0, 1.0], MAT.core));
+    .concat(E.box([-0.8, 3.5, -4.5], [2.8, 2.8, 1.0], MAT.joint));
+
+  /* antenna on its own node: it lags behind the head and springs back,
+     which does more for the sense of weight than any amount of easing */
+  rig.ant = head.add(new E.Node('ant'));
+  rig.ant.setTRS([E.trans(-2.2, 7.2, 0)]);
+  rig.ant.faces = []
+    .concat(E.box([0, 1.2, 0], [0.45, 2.4, 0.45], MAT.joint))
+    .concat(E.box([0, 2.7, 0], [1.0, 1.0, 1.0], MAT.core));
+
 
   /* the two eyes sit slightly proud of the band so they read brighter */
   rig.eyes = head.add(new E.Node('eyes'));
@@ -326,6 +333,11 @@
   /* ── collect + draw ──────────────────────────────────────────────── */
 
   var drawList = [];
+
+  /* the screen's lit and unlit colours, kept aside because MAT.screen is
+     mutated every frame to fade between them */
+  var SCREEN_ON  = { n: MAT.screen.n.slice(), d: MAT.screen.d.slice() };
+  var SCREEN_OFF = { n: MAT.screenOff.n.slice(), d: MAT.screenOff.d.slice() };
 
   function collect(node) {
     if (!node.visible) return;
@@ -670,11 +682,19 @@
     ctx.save();
     contactShadow(ctx, [LAPTOP.x, 0, LAPTOP.z], 26, 1);
     var rp = rig.root.world.t;
-    contactShadow(ctx, [rp[0], 0, rp[2]], 7.5, state ? state.shadow : 1);
+    contactShadow(ctx, [rp[0], 0, rp[2]],
+      7.5 * ((state && state.shadowWide) || 1), state ? state.shadow : 1);
     ctx.restore();
 
     drawList.length = 0;
     _poolN = 0;
+
+    // the panel is dark until the laptop boots
+    var sp = state && state.screen !== undefined ? state.screen : 1;
+    for (var ci = 0; ci < 3; ci++) {
+      MAT.screen.n[ci] = SCREEN_ON.n[ci] + (SCREEN_OFF.n[ci] - SCREEN_ON.n[ci]) * (1 - sp);
+      MAT.screen.d[ci] = SCREEN_ON.d[ci] + (SCREEN_OFF.d[ci] - SCREEN_ON.d[ci]) * (1 - sp);
+    }
 
     // light the key the robot just landed on
     var lk = state && state.litKey >= 0 ? KEYS[state.litKey] : null;
@@ -714,6 +734,11 @@
       ctx.restore();
     }
     atmosphere(ctx, w, h);
+
+    if (state && state.fade > 0.001) {
+      ctx.fillStyle = (theme === 'night' ? 'rgba(6,11,20,' : 'rgba(247,249,252,') + Math.min(1, state.fade).toFixed(3) + ')';
+      ctx.fillRect(0, 0, w, h);
+    }
   }
 
   /* Bloom around the light sources, additive, after the solid pass. */

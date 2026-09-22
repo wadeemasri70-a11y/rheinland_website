@@ -30,7 +30,10 @@ assets/img/           Logo (Wortmarke und Bildmarke)
 Ein kleiner Roboter läuft über einen Schreibtisch, der links im Bild auf eine
 Wand trifft, steckt ein Kabel in die Steckdose, der Arbeitsplatz erwacht, der
 Laptop startet, und der Roboter springt auf die Tastatur und schreibt pro
-Sprung eine Zeile Code.
+Sprung eine Zeile Code. Danach geht ihm die Puste aus: Er sackt zusammen,
+kippt rücklings über die Tasten, bleibt liegen und atmet durch. Das Bild
+blendet ab, und alles beginnt von vorn — die Schleife dauert rund 27
+Sekunden.
 
 Das ist echtes 3D: Geometrie, Perspektive und Beleuchtung werden pro Bild
 berechnet und auf ein `<canvas>` gezeichnet. Der Look orientiert sich an
@@ -57,7 +60,10 @@ erweitert:
 
 ### Anpassen
 
-- **Timing** steht gesammelt im Objekt `T` in `anim3d.js`.
+- **Timing** steht gesammelt im Objekt `T` in `anim3d.js`. Die Länge der
+  Schleife ergibt sich aus `T.loop`; die Phasen nach dem letzten Sprung
+  (`tireTo`, `flopTo`, `restTo`, `fadeTo`) hängen aneinander, sodass eine
+  Änderung am Hüpfen den Rest automatisch nachzieht.
 - **Auf welche Tasten der Roboter springt** bestimmt `HOP_KEYS`; pro Sprung
   wird eine Zeile aus `CODE` getippt.
 - **Kamera und Bildausschnitt**: `new E.Camera({...})` in `scene3d.js`.
@@ -65,6 +71,16 @@ erweitert:
   — so sitzen die Objekte links und die Überschrift rechts. Auf schmalen
   Bildschirmen setzt `hero3d.js` die Verschiebung zurück.
 - **Farben und Licht** stehen in `MAT` und `THEMES` in `scene3d.js`.
+  `MAT.screen` ist der einzige Eintrag, der pro Bild verändert wird: Er
+  blendet zwischen dunklem und laufendem Bildschirm um, weil emittierende
+  Flächen sonst auch bei ausgeschaltetem Strom leuchten würden.
+
+Zwei Kleinigkeiten tragen viel zur Lebendigkeit bei und sind leicht zu
+übersehen: Die Antenne hängt an einem eigenen Knoten und wird von einer
+gedämpften Feder bewegt, die auf die vertikale Beschleunigung des Körpers
+reagiert — sie eilt dem Körper nach und schwingt bei jeder Landung aus. Und
+die Arme schwingen um eine knappe halbe Phase versetzt zu den Beinen; ohne
+diesen Versatz wirkt der Gang mechanisch.
 
 Bei `prefers-reduced-motion: reduce` wird statt der Animation das fertige,
 beleuchtete Schlussbild gezeigt. Läuft die Szene aus dem Sichtfeld, pausiert
