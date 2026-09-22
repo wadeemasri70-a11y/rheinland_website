@@ -284,6 +284,104 @@
     });
   });
 
+  /* ── the contact machine ─────────────────────────────────────────────
+     The enquiry form sits inside a screen with a keyboard drawn beneath it.
+     Typing anywhere in the form lights the matching key.
+
+     Keys are addressed by KeyboardEvent.code, which names the physical key
+     rather than the character it produces. The drawing is a German QWERTZ
+     layout, so on a German keyboard the lit key is also the one under the
+     visitor's finger — pressing Z reports code KeyY, which is exactly where
+     Z sits on this layout.
+     ──────────────────────────────────────────────────────────────────── */
+
+  (function machine() {
+    var kbd = document.getElementById('machineKbd');
+    var machineEl = document.querySelector('.machine');
+    var form = document.getElementById('contactForm');
+    if (!kbd) return;
+
+    var ROWS = [
+      [['Backquote','^'],['Digit1','1'],['Digit2','2'],['Digit3','3'],['Digit4','4'],['Digit5','5'],
+       ['Digit6','6'],['Digit7','7'],['Digit8','8'],['Digit9','9'],['Digit0','0'],['Minus','ß'],
+       ['Equal','´'],['Backspace','⌫','wide-1']],
+      [['Tab','⇥','wide-1'],['KeyQ','Q'],['KeyW','W'],['KeyE','E'],['KeyR','R'],['KeyT','T'],['KeyY','Z'],
+       ['KeyU','U'],['KeyI','I'],['KeyO','O'],['KeyP','P'],['BracketLeft','Ü'],['BracketRight','+']],
+      [['CapsLock','⇪','wide-1'],['KeyA','A'],['KeyS','S'],['KeyD','D'],['KeyF','F'],['KeyG','G'],
+       ['KeyH','H'],['KeyJ','J'],['KeyK','K'],['KeyL','L'],['Semicolon','Ö'],['Quote','Ä'],
+       ['Enter','⏎','wide-1']],
+      [['ShiftLeft','⇧','wide-2'],['KeyZ','Y'],['KeyX','X'],['KeyC','C'],['KeyV','V'],['KeyB','B'],
+       ['KeyN','N'],['KeyM','M'],['Comma',','],['Period','.'],['Slash','-'],['ShiftRight','⇧','wide-2']],
+      [['ControlLeft','Strg','wide-1'],['AltLeft','Alt'],['Space','','space'],
+       ['AltRight','AltGr'],['ControlRight','Strg','wide-1']]
+    ];
+
+    var byCode = {};
+    var byChar = {};
+
+    ROWS.forEach(function (row) {
+      var r = document.createElement('div');
+      r.className = 'kbd-row';
+      row.forEach(function (k) {
+        var el = document.createElement('span');
+        el.className = 'kbd-key' + (k[2] ? ' ' + k[2] : '');
+        el.textContent = k[1];
+        r.appendChild(el);
+        byCode[k[0]] = el;
+        if (k[1] && k[1].length === 1) byChar[k[1].toLowerCase()] = el;
+      });
+      kbd.appendChild(r);
+    });
+
+    var timers = new WeakMap ? new WeakMap() : null;
+
+    function press(el) {
+      if (!el) return;
+      el.classList.add('is-down');
+      var prev = timers && timers.get(el);
+      if (prev) clearTimeout(prev);
+      var id = setTimeout(function () { el.classList.remove('is-down'); }, 150);
+      if (timers) timers.set(el, id);
+    }
+
+    if (form) {
+      var handledAt = 0;
+
+      form.addEventListener('keydown', function (e) {
+        var el = byCode[e.code];
+        if (!el && e.key && e.key.length === 1) el = byChar[e.key.toLowerCase()];
+        if (!el && e.key === ' ') el = byCode.Space;
+        if (!el) return;
+        handledAt = Date.now();
+        press(el);
+      });
+
+      /* Phone keyboards often report no usable code, so fall back to the
+         character that was actually inserted — but only when keydown did
+         not already resolve the key, or a US layout would light two. */
+      form.addEventListener('input', function (e) {
+        if (Date.now() - handledAt < 80) return;
+        if (e.inputType && e.inputType.indexOf('delete') === 0) return press(byCode.Backspace);
+        var d = e.data;
+        if (!d) return;
+        var ch = d.slice(-1).toLowerCase();
+        press(byChar[ch] || (ch === ' ' ? byCode.Space : null));
+      });
+    }
+
+    /* the machine powers up when it comes into view */
+    if (machineEl) {
+      if (!('IntersectionObserver' in window)) machineEl.classList.add('is-live');
+      else {
+        new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            machineEl.classList.toggle('is-live', en.intersectionRatio > 0.12);
+          });
+        }, { threshold: [0, 0.12, 0.4] }).observe(machineEl);
+      }
+    }
+  }());
+
   /* ── contact form ────────────────────────────────────────────────────
      No backend yet: the form composes a complete message and hands it to
      the visitor's mail client. Replace this submit handler with a POST to

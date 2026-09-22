@@ -668,6 +668,55 @@
     ctx.restore();
   }
 
+  /* ── dust ────────────────────────────────────────────────────────────
+     Slow motes drifting through the light. Night only: in the day theme
+     they read as dirt on the screen rather than atmosphere. Positions are
+     kept in normalised screen space so a resize never strands them. */
+
+  var motes = null;
+
+  function initMotes() {
+    motes = [];
+    for (var i = 0; i < 46; i++) {
+      motes.push({
+        x: Math.random(),
+        y: Math.random(),
+        r: 0.5 + Math.random() * 1.6,
+        vy: -(0.006 + Math.random() * 0.016),
+        vx: (Math.random() - 0.5) * 0.010,
+        a: 0.10 + Math.random() * 0.34,
+        ph: Math.random() * 6.28
+      });
+    }
+  }
+
+  function dustPass(ctx, w, h, dt, power) {
+    if (theme !== 'night' || reduced) return;
+    if (!motes) initMotes();
+    var step = Math.min(3, dt / 16.67);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var i = 0; i < motes.length; i++) {
+      var m = motes[i];
+      m.y += m.vy * 0.01 * step;
+      m.x += (m.vx + Math.sin(m.ph) * 0.004) * 0.01 * step;
+      m.ph += 0.004 * step;
+      if (m.y < -0.04) { m.y = 1.04; m.x = Math.random(); }
+      if (m.x < -0.04) m.x = 1.04;
+      if (m.x > 1.04) m.x = -0.04;
+
+      // motes drifting in front of the lit screen catch more light
+      var near = 1 - Math.min(1, Math.abs(m.x - 0.30) / 0.34);
+      var alpha = m.a * (0.18 + 0.82 * power) * (0.30 + 0.70 * near);
+      if (alpha < 0.004) continue;
+      ctx.beginPath();
+      ctx.arc(m.x * w, m.y * h, m.r, 0, 6.2832);
+      ctx.fillStyle = 'rgba(150,222,240,' + alpha.toFixed(3) + ')';
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   function renderFrame(state) {
     var ctx = renderer.ctx, w = renderer.w, h = renderer.h;
 
@@ -734,6 +783,8 @@
       ctx.restore();
     }
     atmosphere(ctx, w, h);
+    dustPass(ctx, w, h, (state && state.dt) || 16.67,
+             state ? (state.cableLit || 0) : 1);
 
     if (state && state.fade > 0.001) {
       ctx.fillStyle = (theme === 'night' ? 'rgba(6,11,20,' : 'rgba(247,249,252,') + Math.min(1, state.fade).toFixed(3) + ')';

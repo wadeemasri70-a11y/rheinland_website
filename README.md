@@ -14,6 +14,7 @@ datenschutz.html      Datenschutzerklärung (Grundfassung, Platzhalter)
 
 assets/css/main.css   Design-Tokens beider Themes, Layout, alle Sektionen
 assets/css/hero.css   Bühne der Hero-Szene
+assets/css/machine.css Kontaktformular als Rechner samt Tastatur
 
 assets/js/engine3d.js 3D-Kern: Transformhierarchie, Projektion, Sortierung
 assets/js/scene3d.js  Geometrie, Materialien, Licht, Zeichnen
@@ -104,7 +105,31 @@ sichtbaren Sprung bei null beginnt.
 
 Bei `prefers-reduced-motion: reduce` stehen die Endwerte sofort da.
 
+## Das Kontaktformular als Rechner
+
+Das Anfrageformular steckt in einem Bildschirm mit Firmenlogo auf der
+Blende, hängt an einem sichtbaren Stromkabel und hat eine gezeichnete
+Tastatur darunter. Wer im Formular tippt, sieht die passende Taste
+aufleuchten.
+
+Die Tasten werden über `KeyboardEvent.code` angesprochen, nicht über das
+erzeugte Zeichen. `code` benennt die Taste an ihrem Platz, unabhängig vom
+eingestellten Layout — gezeichnet ist QWERTZ, und auf einer deutschen
+Tastatur liegt damit die leuchtende Taste genau unter dem Finger: Das Z
+meldet `KeyY`, und dort sitzt auf diesem Layout das Z. Bildschirmtastaturen
+liefern oft keinen brauchbaren `code`; dafür gibt es einen zweiten Weg über
+das eingefügte Zeichen, der nur greift, wenn der erste nichts gefunden hat
+(sonst leuchten auf einem US-Layout zwei Tasten gleichzeitig).
+
+Der Rechner „geht an“, sobald er ins Bild kommt: Die Leuchtdiode pulst und
+ein Lichtpunkt wandert durch das Kabel.
+
 ## Themes
+
+Der Nachtmodus hat etwas mehr Bewegung als der Tagmodus: Staub treibt durch
+die Hero-Szene, ein sehr langsamer Lichtschleier wandert dahinter, und der
+Akzentpunkt in der Auszeichnungszeile atmet. Im Tagmodus entfällt beides —
+Staub liest sich auf hellem Grund als Schmutz, nicht als Atmosphäre.
 
 Nacht ist die Voreinstellung, Tag die Alternative; die Wahl wird im
 `localStorage` gemerkt und vor dem ersten Rendern gesetzt, damit nichts

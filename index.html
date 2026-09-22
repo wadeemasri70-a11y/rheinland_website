@@ -21,6 +21,7 @@
 </script>
 <link rel="stylesheet" href="assets/css/main.css">
 <link rel="stylesheet" href="assets/css/hero.css">
+<link rel="stylesheet" href="assets/css/machine.css">
 </head>
 <body>
 
@@ -431,6 +432,23 @@
       <p class="fineprint" data-i18n="ct.wanote">WhatsApp-Nummer und Telefonnummer bitte vor dem Livegang eintragen.</p>
     </div>
 
+    <div class="machine">
+      <!-- power feed: the same idea as the hero, the box is plugged in -->
+      <div class="machine-power" aria-hidden="true">
+        <span class="machine-socket"><i></i><i></i></span>
+        <svg class="machine-cable" viewBox="0 0 300 62" preserveAspectRatio="none">
+          <path class="mc-wire" d="M283 20 C 250 52, 196 30, 140 44 C 84 58, 44 44, 8 60"/>
+          <path class="mc-live" d="M283 20 C 250 52, 196 30, 140 44 C 84 58, 44 44, 8 60"/>
+        </svg>
+      </div>
+
+      <div class="machine-body">
+        <div class="machine-bezel">
+          <img src="assets/img/logo-full.png" alt="" width="522" height="194" aria-hidden="true">
+          <span class="machine-led" aria-hidden="true"></span>
+        </div>
+
+        <div class="machine-viewport">
     <form class="contact-form" id="contactForm" novalidate>
       <div class="f-row">
         <label class="field">
@@ -479,6 +497,14 @@
       <button class="btn btn-primary btn-block" type="submit" data-i18n="ct.submit">Anfrage senden</button>
       <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
     </form>
+        </div><!-- /machine-viewport -->
+      </div><!-- /machine-body -->
+
+      <div class="machine-stand" aria-hidden="true"><i class="neck"></i><i class="foot"></i></div>
+
+      <!-- decorative keyboard: keys light up as you type in the form above -->
+      <div class="machine-kbd" id="machineKbd" aria-hidden="true"></div>
+    </div><!-- /machine -->
   </div>
 </section>
 </main>

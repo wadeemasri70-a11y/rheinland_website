@@ -19,6 +19,7 @@
     lastT = t;
     var st = A.update(t, dt);
     st.plugWorld = S.plugWorld;
+    st.dt = dt;
     S.renderFrame(st);
   }
 
