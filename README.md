@@ -368,10 +368,38 @@ Hero-Szene, der Innenabstand des Hero-Bereichs, der obere Abstand der
 Rechtstexte und die Oberkante des eingeklappten Mobilmenüs. Als Zahl an fünf
 Stellen wiederholt wäre sie bei der nächsten Änderung an vieren falsch.
 
+Beim Scrollen zieht sich beides wieder zusammen: `.is-compact` schaltet Leiste
+und Wortmarke auf ihre Arbeitsgröße, mit einem Übergang von 0,45 s. Der Wechsel
+hat bewusst eigene Schwellen — gesetzt ab 70 px, zurückgenommen erst unter
+24 px. Mit einer einzigen Schwelle würde ein Scrollen, das genau darauf zu
+liegen kommt, die Marke flackern lassen. Der Hintergrund der Leiste kommt davon
+unabhängig schon ab 10 px, damit sie nie durchsichtig über Inhalt steht.
+
 Ein Hinweis zum Bildmaterial: In `logo-full.png` sind oben und unten je rund
 18 % des Bildes durchsichtig. Die Grafik ist also deutlich kleiner als ihr
 Rahmen — wer die Höhe nach dem Kasten bemisst statt nach der Zeichnung, hält
 das Logo für zu groß, obwohl es gut in der Leiste sitzt.
+
+### Der Funke über der Wortmarke
+
+Alle drei Sekunden läuft ein schmales Band Licht von links nach rechts über die
+Schrift. Das Logo ist eine Grafik und kein Text, also liegt das Band als eigene
+Ebene darüber und wird mit derselben Bilddatei als Maske auf die Form des Logos
+beschnitten: Es leuchten nur die Striche, nie die Fläche dazwischen. Die
+Nachtfassung ist die umgefärbte Tagfassung, ihr Alphakanal ist identisch — eine
+Maske reicht für beide Themes. Unter 620 px zeigt die Leiste die Bildmarke, dort
+maskiert dieselbe Ebene mit `logo-mark.png`.
+
+Zwei Dinge, die dabei Zeit gekostet haben und leicht wieder passieren:
+
+- Das Band wandert über `transform`, nicht über `background-position`. Ein
+  Prozentwert bei `background-position` misst gegen die *Differenz* zwischen
+  Bild und Kasten, nicht gegen den Kasten — bei dreifacher Bildbreite läuft er
+  dadurch rückwärts und über eine Strecke, die man kaum im Kopf ausrechnet. Der
+  erste Versuch lief deshalb von rechts nach links.
+- Der Funke ist gesättigtes Cyan, kein Weiß. Nachts ist „Rheinland“ bereits
+  fast weiß; ein weißes Aufblitzen darauf ändert praktisch nichts. Ein Wechsel
+  der *Farbe* liest sich als Funke, ein Wechsel der Helligkeit nicht.
 
 ## Sprachen
 

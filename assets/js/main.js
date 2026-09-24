@@ -251,8 +251,19 @@
   var burger = document.getElementById('burger');
   var nav = document.getElementById('nav');
 
+  /* Two separate thresholds. The bar takes its background as soon as the
+     page moves at all, so it never sits transparent over content. The
+     wordmark only pulls back once the visitor has really left the top —
+     and hands the size back a good bit earlier, so a scroll that hovers
+     around the trigger cannot make it flicker. */
+  var compact = false;
+
   function onScroll() {
-    if (header) header.classList.toggle('is-stuck', window.scrollY > 10);
+    if (!header) return;
+    var y = window.scrollY;
+    header.classList.toggle('is-stuck', y > 10);
+    if (!compact && y > 70) { compact = true; header.classList.add('is-compact'); }
+    else if (compact && y < 24) { compact = false; header.classList.remove('is-compact'); }
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();

@@ -20,10 +20,14 @@
   --f-body:   'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-mono:   'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  /* header height. The bar grows with the viewport so the wordmark can be
-     large on a desktop without crowding the row; four other rules follow
-     it, so it lives here rather than being repeated as a number. */
-  --hh: clamp(74px, 6.2vw, 90px);
+  /* Header height, in two states. At the top of the page the bar is tall
+     and the wordmark is at its largest; once the page is scrolled it pulls
+     back to a working size so it takes less of the screen. Four other
+     rules follow --hh, so it lives here rather than being repeated as a
+     number; they all use the at-rest height, which is the offset the page
+     is laid out against. */
+  --hh: clamp(74px, 7.6vw, 112px);
+  --hh-sm: clamp(70px, 5.2vw, 78px);
 
   --shell: 1280px;
   --gut: clamp(20px, 5vw, 52px);
@@ -123,13 +127,64 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
   -webkit-backdrop-filter:blur(16px) saturate(140%);
   border-bottom-color:var(--line);
 }
-.header-inner{ display:flex; align-items:center; gap:22px; height:var(--hh); }
+.header-inner{
+  display:flex; align-items:center; gap:22px; height:var(--hh);
+  transition:height .45s var(--ease);
+}
+.site-header.is-compact .header-inner{ height:var(--hh-sm); }
 
-.brand{ display:flex; align-items:center; text-decoration:none; flex:0 0 auto; }
+.brand{ position:relative; display:flex; align-items:center; text-decoration:none; flex:0 0 auto; }
+
+/* ── the spark across the wordmark ───────────────────────────────────────
+   Every three seconds a narrow band of light runs across the letters from
+   left to right. The logo is artwork, not text, so the band is a gradient
+   in a layer over it, cut to the shape of the logo with the very same file
+   as a mask — only the strokes light up, never the space between them. The
+   night file is the day file recoloured, so its alpha is identical and one
+   mask serves both themes.
+   ────────────────────────────────────────────────────────────────────── */
+.brand-spark{
+  position:absolute; inset:0; pointer-events:none;
+  -webkit-mask:url("../img/logo-full.png") no-repeat 0 0 / 100% 100%;
+          mask:url("../img/logo-full.png") no-repeat 0 0 / 100% 100%;
+  /* A white flash would be wasted here: at night "Rheinland" is already
+     near-white, so brightening it changes almost nothing. The band is a
+     saturated cyan instead — the light letters turn cyan, the cyan ones
+     go white-hot, and the orange mark lights up too. A shift in colour
+     reads as a spark where a shift in brightness does not. */
+  --spark: #1FA8BE;
+  --spark-core: #5FE9F5;
+}
+/* The band is its own layer and travels on a transform, not on a background
+   position: a percentage background-position is measured against the
+   difference between the image and the box, which runs the wrong way and
+   makes the distance hard to reason about. A translate is simply left to
+   right across the wordmark. */
+.brand-spark::before{
+  content:"";
+  position:absolute; top:-30%; bottom:-30%; left:0; width:26%;
+  background:linear-gradient(90deg,
+    transparent, var(--spark) 30%, var(--spark-core) 50%, var(--spark) 70%, transparent);
+  animation:brandSpark 3s linear infinite;
+}
+@keyframes brandSpark{
+  0%       { transform:translateX(-150%) skewX(-16deg); opacity:0; }
+  2%       { opacity:1; }
+  22%      { transform:translateX(470%)  skewX(-16deg); opacity:1; }
+  24%, 100%{ transform:translateX(470%)  skewX(-16deg); opacity:0; }
+}
+:root[data-theme="day"] .brand-spark{ --spark:#0B7C8A; --spark-core:#2FD2E4; }
 /* As large as the row allows: full size once there is room beside the
-   navigation, stepped down in the band where the two would meet. */
-.brand-full{ width:clamp(206px, 21vw, 282px); height:auto; }
-.brand-mark{ display:none; width:48px; height:48px; }
+   navigation, stepped down in the band where the two would meet, and
+   biggest of all above 1280px where the menu leaves plenty of room. */
+.brand-full{ width:clamp(206px, 21vw, 282px); height:auto; transition:width .45s var(--ease); }
+.brand-mark{ display:none; width:48px; height:48px; transition:width .45s var(--ease), height .45s var(--ease); }
+@media (min-width:1280px){
+  .brand-full{ width:clamp(282px, 24vw, 330px); }
+}
+/* scrolled: the mark returns to a working size and gets out of the way */
+.site-header.is-compact .brand-full{ width:clamp(196px, 14.5vw, 216px); }
+.site-header.is-compact .brand-mark{ width:42px; height:42px; }
 /* The wordmark is dark navy artwork, so on a dark background it has to be
    lifted. A white-out filter did that, but it flattened the orange too —
    and the orange is the same #E4791E as the initials in the headline. So
@@ -708,8 +763,11 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
     position:fixed; inset:var(--hh) 0 auto 0; flex-direction:column; align-items:stretch; gap:2px;
     background:var(--bg); padding:14px var(--gut) 24px; border-bottom:1px solid var(--line);
     transform:translateY(-10px); opacity:0; visibility:hidden; pointer-events:none;
-    transition:opacity .3s var(--ease), transform .3s var(--ease), visibility .3s;
+    /* the drawer hangs off the header, so it rides the same shrink */
+    transition:opacity .3s var(--ease), transform .3s var(--ease), visibility .3s,
+               inset-block-start .45s var(--ease);
   }
+  .site-header.is-compact .nav{ inset-block-start:var(--hh-sm); }
   .nav.is-open{ transform:none; opacity:1; visibility:visible; pointer-events:auto; }
   .nav a{ padding:14px 12px; font-size:16px; }
   .nav .nav-cta{ margin:10px 0 0; text-align:center; }
@@ -723,12 +781,18 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 @media (max-width:620px){
   .brand-full{ display:none; }
   .brand-mark{ display:block; }
+  .brand-spark{
+    -webkit-mask-image:url("../img/logo-mark.png");
+            mask-image:url("../img/logo-mark.png");
+  }
   .f-row{ grid-template-columns:1fr; }
   .footer-grid{ grid-template-columns:1fr; gap:26px; }
 }
 
 @media (prefers-reduced-motion:reduce){
   .reveal{ opacity:1; transform:none; }
+  .header-inner, .brand-full, .brand-mark{ transition:none; }
+  .brand-spark::before{ animation:none; display:none; }
   [data-drawable] svg > *{ stroke-dasharray:none; stroke-dashoffset:0; }
   .card::after{ display:none; }
   :root[data-theme="night"] .hero::before{ animation:none; }
