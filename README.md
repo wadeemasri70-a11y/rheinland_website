@@ -246,7 +246,7 @@ Fünf Aufnahmen, alle quadratisch, damit sie als ein Satz gelesen werden:
 | `team-workshop.webp` | neben der Überschrift der Arbeitsweise |
 | `team-desks.webp` | neben der Überschrift des Portfolios |
 | `team-meeting.webp` | neben den Zielgruppen |
-| `team-advice.webp` | im Buchhaltungsbereich |
+| `team-advice.webp` | unter den Profil-Links im Kontaktbereich |
 
 Beschnitten wird auf das größte echte Quadrat der Vorlage; hochgerechnet
 wird nichts, weil das keine Schärfe zurückbringt. Zwei der Vorlagen sind
@@ -407,6 +407,27 @@ Deutsch ist die Standardsprache und steht direkt im HTML; Englisch liegt in
 `assets/js/i18n.js` und wird über `data-i18n`-Attribute eingesetzt. Beide
 Blöcke teilen sich dieselben Schlüssel — eine weitere Sprache ist ein
 weiterer Block.
+
+## Entfernt: Buchhaltung
+
+Der Bereich „Buchhaltung & Kooperationspartner“ ist auf Wunsch des Inhabers
+vollständig entfallen — mit ihm der Menüpunkt, der Themeneintrag im
+Anfrageformular, die entsprechende Zeile im Gründerpaket und alle Textbausteine
+`acc.*`. Zwei Dinge sind dabei bewusst stehen geblieben:
+
+- Im Impressum der Satz „Rheinland Digitalwerk erbringt keine Rechts-, Steuer-
+  oder Buchhaltungsberatung.“ Er beschreibt keine Leistung, sondern grenzt ab —
+  und das bleibt sinnvoll, solange „Marketing- & Vertriebsberatung“ angeboten
+  wird. Der zweite Satz, der die Vermittlung an Berufsträger beschrieb, ist
+  entfallen. Die USt-IdNr. bleibt ohnehin: sie ist eine Pflichtangabe im
+  Impressum, keine Buchhaltungsleistung.
+- Der Schlüssel `ct.o9` im Themenfeld ist ersatzlos entfallen, die übrigen
+  behalten ihre Nummern. Ein Durchnummerieren hätte jede Zeile im Formular und
+  in beiden Sprachblöcken angefasst, um nichts zu gewinnen.
+
+Die Aufnahme aus dem Bereich ist nicht mit verschwunden: sie steht jetzt unter
+den Profil-Links im Kontaktbereich, wo die linke Spalte vorher lange vor dem
+Formular daneben zu Ende war.
 
 ## Vor dem Livegang zu erledigen
 

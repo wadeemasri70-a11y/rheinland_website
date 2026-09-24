@@ -54,10 +54,7 @@
 /* audience: the picture sits above the list, both in the second column */
 .aud-side{ display:grid; gap:18px; align-content:start; }
 /* keep every photograph at roughly the same size across the page */
-.aud-side .shot, .acc-side .shot{ margin:0; max-width:400px; }
-
-/* bookkeeping: picture over the responsibility note */
-.acc-side{ display:grid; gap:18px; }
+.aud-side .shot{ margin:0; max-width:400px; }
 
 @media (max-width:1040px){
   .sec-split{ grid-template-columns:1fr; gap:26px; }
