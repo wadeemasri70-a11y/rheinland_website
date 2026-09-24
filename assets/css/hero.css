@@ -7,7 +7,7 @@
 .hero{ overflow:hidden; }
 
 .hero-stage{
-  position:absolute; inset:74px 0 0 0;
+  position:absolute; inset:var(--hh) 0 0 0;
   z-index:1;
   pointer-events:none;
 }

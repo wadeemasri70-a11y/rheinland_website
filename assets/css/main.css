@@ -20,6 +20,11 @@
   --f-body:   'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-mono:   'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
+  /* header height. The bar grows with the viewport so the wordmark can be
+     large on a desktop without crowding the row; four other rules follow
+     it, so it lives here rather than being repeated as a number. */
+  --hh: clamp(74px, 6.2vw, 90px);
+
   --shell: 1280px;
   --gut: clamp(20px, 5vw, 52px);
   --sec-y: clamp(66px, 8vw, 116px);
@@ -118,11 +123,13 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
   -webkit-backdrop-filter:blur(16px) saturate(140%);
   border-bottom-color:var(--line);
 }
-.header-inner{ display:flex; align-items:center; gap:22px; height:74px; }
+.header-inner{ display:flex; align-items:center; gap:22px; height:var(--hh); }
 
 .brand{ display:flex; align-items:center; text-decoration:none; flex:0 0 auto; }
-.brand-full{ width:212px; height:auto; }
-.brand-mark{ display:none; width:42px; height:42px; }
+/* As large as the row allows: full size once there is room beside the
+   navigation, stepped down in the band where the two would meet. */
+.brand-full{ width:clamp(206px, 21vw, 282px); height:auto; }
+.brand-mark{ display:none; width:48px; height:48px; }
 /* The wordmark is dark navy artwork, so on a dark background it has to be
    lifted. A white-out filter did that, but it flattened the orange too —
    and the orange is the same #E4791E as the initials in the headline. So
@@ -235,7 +242,7 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 
 /* ── hero ────────────────────────────────────────────────────────────── */
 
-.hero{ position:relative; padding-top:74px; }
+.hero{ position:relative; padding-top:var(--hh); }
 /* a slow wash of light behind the scene — night only, and slow enough that
    it registers as atmosphere rather than as an animation */
 :root[data-theme="night"] .hero::before{
@@ -670,7 +677,7 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 
 /* ── legal pages ─────────────────────────────────────────────────────── */
 
-.legal{ padding-block:calc(74px + clamp(38px,6vw,76px)) var(--sec-y); }
+.legal{ padding-block:calc(var(--hh) + clamp(38px,6vw,76px)) var(--sec-y); }
 .legal .shell{ max-width:820px; }
 .legal h1{ font-size:clamp(28px,3.6vw,42px); margin-bottom:10px; }
 .legal h2{ font-size:clamp(19px,1.9vw,24px); margin-top:42px; margin-bottom:10px; }
@@ -698,7 +705,7 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 }
 @media (max-width:900px){
   .nav{
-    position:fixed; inset:74px 0 auto 0; flex-direction:column; align-items:stretch; gap:2px;
+    position:fixed; inset:var(--hh) 0 auto 0; flex-direction:column; align-items:stretch; gap:2px;
     background:var(--bg); padding:14px var(--gut) 24px; border-bottom:1px solid var(--line);
     transform:translateY(-10px); opacity:0; visibility:hidden; pointer-events:none;
     transition:opacity .3s var(--ease), transform .3s var(--ease), visibility .3s;

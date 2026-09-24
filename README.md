@@ -355,6 +355,24 @@ einem `requestAnimationFrame`-Durchgang als zwei Custom Properties geschrieben,
 damit das Bewegen der Maus über das Raster nicht mitten im Frame Layout liest.
 Auf Geräten ohne feinen Zeiger entfällt er.
 
+## Kopfzeile
+
+Die Wortmarke soll auf einem Desktop groß stehen, ohne die Navigation zu
+bedrängen. Beide wachsen deshalb mit dem Ansichtsfenster: `--hh` gibt die Höhe
+der Leiste vor, `.brand-full` die Breite des Logos, beide als `clamp()`. In der
+Enge zwischen 900 und 1100 px bleibt das Logo bei seinem Mindestwert, damit
+zwischen ihm und den Menüpunkten Luft bleibt.
+
+`--hh` steht in `:root`, weil vier weitere Regeln daran hängen: die Bühne der
+Hero-Szene, der Innenabstand des Hero-Bereichs, der obere Abstand der
+Rechtstexte und die Oberkante des eingeklappten Mobilmenüs. Als Zahl an fünf
+Stellen wiederholt wäre sie bei der nächsten Änderung an vieren falsch.
+
+Ein Hinweis zum Bildmaterial: In `logo-full.png` sind oben und unten je rund
+18 % des Bildes durchsichtig. Die Grafik ist also deutlich kleiner als ihr
+Rahmen — wer die Höhe nach dem Kasten bemisst statt nach der Zeichnung, hält
+das Logo für zu groß, obwohl es gut in der Leiste sitzt.
+
 ## Sprachen
 
 Deutsch ist die Standardsprache und steht direkt im HTML; Englisch liegt in
