@@ -121,8 +121,8 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 .header-inner{ display:flex; align-items:center; gap:22px; height:74px; }
 
 .brand{ display:flex; align-items:center; text-decoration:none; flex:0 0 auto; }
-.brand-full{ width:182px; height:auto; }
-.brand-mark{ display:none; width:36px; height:36px; }
+.brand-full{ width:212px; height:auto; }
+.brand-mark{ display:none; width:42px; height:42px; }
 /* The wordmark is dark navy artwork, so on a dark background it has to be
    lifted. A white-out filter did that, but it flattened the orange too —
    and the orange is the same #E4791E as the initials in the headline. So
@@ -746,7 +746,7 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 }
 
 .fab-bot{
-  width:78px; height:92px; padding:0; border:0; background:none; cursor:pointer;
+  width:94px; height:111px; padding:0; border:0; background:none; cursor:pointer;
   display:block; -webkit-tap-highlight-color:transparent;
 }
 .fab-bot-inner{
@@ -770,10 +770,13 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 .fb-stem{ stroke:var(--fb-edge); stroke-width:2.4; stroke-linecap:round; fill:none; }
 .fb-bulb{ fill:#E4791E; animation:fabBulb 3.1s ease-in-out infinite; }
 .fb-ant{ transform-origin:36px 16px; animation:fabAnt 4.4s ease-in-out infinite; }
+/* The label changes with the language, so its size is settled in script
+   (see fitBelly) rather than tuned to one word here. */
 .fb-text{
   fill:var(--fb-visor); font-family:var(--f-body); font-weight:700;
   font-size:7px; letter-spacing:.2px; text-anchor:middle;
 }
+.fb-text[hidden]{ display:none; }
 .fb-jets{ opacity:calc(.22 + .78 * var(--fab-thrust)); transition:opacity .18s ease; }
 .fb-jet{
   fill:#E4791E; transform-origin:center top;
@@ -781,7 +784,7 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
   transition:scale .18s ease;
 }
 .fab-shadow{
-  position:absolute; left:50%; bottom:-10px; width:46px; height:9px;
+  position:absolute; left:50%; bottom:-10px; width:56px; height:10px;
   translate:-50% 0; border-radius:50%;
   background:radial-gradient(closest-side, rgba(0,0,0,.42), transparent);
   opacity:.55;
@@ -853,7 +856,7 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 :root[data-theme="day"] .fo-fb{ --soc:#1559CF; }
 
 @media (max-width:620px){
-  .fab-bot{ width:64px; height:76px; }
+  .fab-bot{ width:78px; height:92px; }
   .fab-menu{ width:198px; }
 }
 @media (prefers-reduced-motion:reduce){

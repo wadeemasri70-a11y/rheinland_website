@@ -178,22 +178,41 @@
 
 .machine-power{ pointer-events:none; }   /* only the plug is interactive */
 
+/* Seated on the socket rather than parked beside it: the plug is centred
+   on the wall plate, a shade wider than it, and sits in front of it — which
+   is what a plug pushed home actually looks like head-on. The size and the
+   two offsets belong together; the plug's 36×42 artwork is fitted into the
+   button, so changing one without the others moves it off the plate. */
 .machine-plug{
-  position:absolute; top:-10px; inset-inline-end:1px;
-  width:30px; height:28px; padding:0;
+  position:absolute; top:-4px; inset-inline-end:-4px;
+  width:34px; height:32px; padding:0;
   border:0; background:none; cursor:grab;
   pointer-events:auto; touch-action:none;
   transition:transform .42s var(--ease);
   z-index:3;
 }
 .machine-plug:active{ cursor:grabbing; }
-.machine-plug svg{ width:100%; height:100%; overflow:visible; }
-.pl-body  { fill:var(--surface-2); stroke:var(--line-2); stroke-width:1.5; }
+.machine-plug svg{
+  width:100%; height:100%; overflow:visible;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.34));
+}
+:root[data-theme="day"] .machine-plug svg{ filter:drop-shadow(0 2px 3px rgba(17,32,58,.18)); }
+/* The plug face has to be opaque. `--surface-2` is translucent at night,
+   and the socket's two slots showed straight through the seated plug — it
+   read as glass rather than as something covering the plate. */
+:root, :root[data-theme="night"]{ --plug-face:#1E2C46; }
+:root[data-theme="day"]{ --plug-face:#F6F7F4; }
+.pl-body  { fill:var(--plug-face); stroke:var(--line-2); stroke-width:1.5; }
 .pl-sheen { fill:var(--surface); opacity:.7; }
-.pl-pin   { fill:var(--ink-3); opacity:.85; }
 .pl-grip  { fill:var(--line-2); }
 .pl-collar{ fill:var(--line-2); opacity:.85; }
 .machine-plug:hover .pl-body{ stroke:var(--accent); }
+
+/* The pins are only there to be seen once they leave the socket. Plugged
+   in they would be buried in the wall, so they are hidden — and they come
+   back, red, the moment the plug is dragged or pulled out. */
+.pl-pin{ fill:var(--ink-3); opacity:0; transition:opacity .3s var(--ease), fill .3s var(--ease); }
+.machine-plug.is-dragging .pl-pin{ opacity:.9; }
 
 /* A reminder every so often that the plug can be grabbed. It pulses rather
    than moves: the lead is a drawn path, and a nudge would open a gap at
@@ -207,7 +226,7 @@
 .machine-plug.is-dragging{ transition:none; }
 .machine-plug.is-dragging .pl-body{ animation:none !important; }
 
-/* pulled out: the plug hangs square under the socket */
+/* pulled out: the plug hangs square under the socket, pins bared */
 .machine.is-unplugged .machine-plug{ transform:translate(0, 44px); animation:none; }
 .machine.is-unplugged .pl-pin{ fill:#D9534F; opacity:1; }
 
@@ -317,5 +336,5 @@
   .ms-spark.is-lit{ animation:none; }
   .md-check svg path{ animation:none; stroke-dashoffset:0; }
   .ma-led{ animation:none; }
-  .machine-plug, .mc-wire, .mc-live{ transition:none; }
+  .machine-plug, .mc-wire, .mc-live, .pl-pin{ transition:none; }
 }

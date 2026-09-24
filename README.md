@@ -181,6 +181,16 @@ er zurück in die Dose, weit gezogen bleibt er draußen und an der Dose blitzt
 kurz ein Funke. Vorher war es ein reiner Schwellwert — ab einer gewissen
 Entfernung sprang er heraus, dazwischen passierte nichts.
 
+Im Ruhezustand sitzt der Stecker auf der Dose, nicht daneben: mittig auf der
+Wandplatte und davor. Größe und die beiden Versätze in `.machine-plug` gehören
+zusammen — die Zeichnung ist 36 × 42 und wird in die Schaltfläche eingepasst,
+ein Wert allein verschiebt den Stecker also von der Platte. Die Stifte sind
+dabei ausgeblendet; sie stecken ja in der Wand und kommen erst wieder zum
+Vorschein — rot —, sobald gezogen wird. Die Steckerfläche braucht außerdem
+eine **deckende** Farbe (`--plug-face`): `--surface-2` ist nachts
+durchscheinend, und die beiden Schlitze der Dose schienen glatt durch den
+aufgesteckten Stecker hindurch.
+
 Die Leitung wird dabei aus der **gemessenen** Position des Steckers gezeichnet,
 nicht aus einer Zahl, die zur Stylesheet-Regel passen soll. Das war vorher die
 Fehlerquelle: Der herausgezogene Stecker wird per CSS um 44 px nach unten
@@ -262,6 +272,15 @@ die Hero-Szene, ein sehr langsamer Lichtschleier wandert dahinter, und der
 Akzentpunkt in der Auszeichnungszeile atmet. Im Tagmodus entfällt beides —
 Staub liest sich auf hellem Grund als Schmutz, nicht als Atmosphäre.
 
+Roboter und Laptop sind in der Szene nachts heller als der Raum um sie herum.
+Ihre Materialien tragen ein `lit`-Kennzeichen; `shade()` legt darauf zum
+Schluss `THEMES.night.subject` — eine Verstärkung auf das, was die Lichter
+ohnehin geliefert haben, plus einen kleinen Sockel, damit die dunkelsten
+Flächen nicht schwarz absaufen. Nur die beiden werden so angehoben, die Wand
+und der Tisch bleiben dunkel; der Gegenlicht-Blick der Szene bleibt also
+erhalten, während das Motiv klar herauskommt. Im Tagmodus steht der Wert auf
+`{ m: 1, a: 0 }` — dort ist ohnehin alles hell.
+
 Das Logo bekommt im Nachtmodus eine eigene Fassung. Vorher lag ein
 `brightness(0) invert(1)` darüber, das die dunkle Wortmarke zwar sichtbar
 machte, aber eben alles einebnete — auch das Orange, das im Fließtext als
@@ -309,9 +328,14 @@ sobald er wieder ruhig in seiner Parkposition steht.
 
 Ein Klick öffnet die Auswahl: E-Mail und dieselben vier Netzwerke. Das Menü
 schließt bei Klick daneben, bei `Escape` und nachdem ein Link gefolgt wurde.
-Die Bauchbeschriftung ist über `textLength` auf die Breite der Bauchplatte
-festgenagelt, damit sie nicht überläuft, falls die Hausschrift einmal nicht
-lädt.
+
+Die Bauchbeschriftung wechselt mit der Sprache: auf Deutsch „KONTAKT“ in einer
+Zeile, auf Englisch „CONTACT US“ in zweien. Deshalb kann sie im Markup nicht
+von Hand eingepasst werden — `fitBelly()` misst jede Zeile, drückt sie über
+`textLength` nur dann auf die Plattenbreite, wenn sie sonst überliefe, und
+zentriert eine einzelne Zeile, statt sie oben stehen zu lassen. Aufgerufen wird
+sie beim Aufbau, nach jedem Sprachwechsel und noch einmal, wenn die Schriften
+geladen sind.
 
 ## Leistungskacheln
 

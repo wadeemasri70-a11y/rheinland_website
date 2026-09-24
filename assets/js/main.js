@@ -186,6 +186,7 @@
 
     refreshInitials();
     updateThemeLabel();
+    if (window.RDW_FIT_BELLY) window.RDW_FIT_BELLY();
     if (persist) { try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ } }
   }
 
@@ -863,6 +864,35 @@
     var bot = document.getElementById('fabBot');
     var menu = document.getElementById('fabMenu');
     if (!fab || !bot || !menu) return;
+
+    /* ---- the label on its belly ----
+       German says it in one word, English in two, so the label cannot be
+       fitted by hand in the markup. Each line is measured and squeezed to
+       the belly panel only if it would otherwise run over it, and a single
+       line is re-centred rather than left sitting high. */
+    var BELLY_W = 36;          // usable width of the panel, in viewBox units
+    var belly1 = document.getElementById('fabBelly1');
+    var belly2 = document.getElementById('fabBelly2');
+
+    function fitLine(t) {
+      if (!t) return;
+      t.removeAttribute('textLength');
+      var w = 0;
+      try { w = t.getBBox().width; } catch (err) { return; }   // not rendered yet
+      if (w > BELLY_W) t.setAttribute('textLength', BELLY_W);
+    }
+
+    function fitBelly() {
+      if (!belly1) return;
+      var two = !!(belly2 && belly2.textContent.trim());
+      if (belly2) belly2.hidden = !two;
+      belly1.setAttribute('y', two ? '49.4' : '55.2');
+      fitLine(belly1);
+      if (two) fitLine(belly2);
+    }
+    window.RDW_FIT_BELLY = fitBelly;
+    fitBelly();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBelly);
 
     /* ---- the menu ---- */
     var open = false;

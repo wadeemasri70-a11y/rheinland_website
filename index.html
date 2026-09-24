@@ -698,9 +698,10 @@
         <!-- body with the belly panel -->
         <rect class="fb-shell" x="12" y="37" width="48" height="29" rx="9"/>
         <rect class="fb-belly" x="15.5" y="40.8" width="41" height="21.4" rx="6"/>
-        <!-- textLength pins the word to the panel whichever font loads -->
-        <text class="fb-text" x="36" y="49.4" textLength="32" lengthAdjust="spacingAndGlyphs">CONTACT</text>
-        <text class="fb-text" x="36" y="58.4" textLength="13" lengthAdjust="spacingAndGlyphs">US</text>
+        <!-- two lines, because the label is one word in German and two in
+             English. fitBelly() in main.js centres and fits whatever lands. -->
+        <text class="fb-text" id="fabBelly1" x="36" y="49.4" lengthAdjust="spacingAndGlyphs" data-i18n="fab.belly1">KONTAKT</text>
+        <text class="fb-text" id="fabBelly2" x="36" y="58.4" lengthAdjust="spacingAndGlyphs" data-i18n="fab.belly2"></text>
       </svg>
       <span class="fab-shadow"></span>
     </span>

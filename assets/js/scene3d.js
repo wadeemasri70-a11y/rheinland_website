@@ -39,23 +39,27 @@
     desk:     M([31, 47, 74],  [203, 192, 176], { nofog: 1, flat: 1, layer: 1 }),
     deskEdge: M([17, 26, 43],  [172, 161, 146], { nofog: 1, flat: 1, layer: 1 }),
 
-    shell:    M([21, 33, 56],  [206, 215, 228]),   // robot body
-    shellDk:  M([13, 21, 37],  [172, 183, 200]),
-    joint:    M([9, 15, 27],   [126, 140, 162]),
-    accent:   M([1, 36, 122],  [1, 36, 122]),      // brand navy, both themes
+    /* `lit` marks the two things the scene is actually about — the robot
+       and the laptop, plus the plug the robot carries between them. At
+       night they get their own lift on top of the lighting, so the pair
+       reads clearly without the room around them coming up with it. */
+    shell:    M([21, 33, 56],  [206, 215, 228], { lit: 1 }),   // robot body
+    shellDk:  M([13, 21, 37],  [172, 183, 200], { lit: 1 }),
+    joint:    M([9, 15, 27],   [126, 140, 162], { lit: 1 }),
+    accent:   M([1, 36, 122],  [1, 36, 122],    { lit: 1 }),   // brand navy, both themes
 
-    lidBack:  M([27, 42, 68],  [150, 163, 184]),
-    lidFace:  M([14, 22, 38],  [120, 133, 154]),
-    deck:     M([30, 45, 72],  [186, 196, 211]),
-    key:      M([13, 21, 36],  [126, 139, 160]),
-    chrome:   M([96, 124, 162], [232, 236, 241]),
-    grille:   M([8, 13, 23],    [150, 158, 170]),
-    keyLit:   M([0, 138, 158], [0, 158, 178]),
+    lidBack:  M([27, 42, 68],  [150, 163, 184], { lit: 1 }),
+    lidFace:  M([14, 22, 38],  [120, 133, 154], { lit: 1 }),
+    deck:     M([30, 45, 72],  [186, 196, 211], { lit: 1 }),
+    key:      M([13, 21, 36],  [126, 139, 160], { lit: 1 }),
+    chrome:   M([96, 124, 162], [232, 236, 241], { lit: 1 }),
+    grille:   M([8, 13, 23],    [150, 158, 170], { lit: 1 }),
+    keyLit:   M([0, 138, 158], [0, 158, 178], { lit: 1 }),
 
     socket:   M([34, 50, 78],  [236, 240, 246]),
     socketIn: M([14, 22, 38],  [196, 204, 217]),
     slot:     M([6, 10, 18],   [96, 106, 122]),
-    plug:     M([18, 28, 48],  [190, 199, 214]),
+    plug:     M([18, 28, 48],  [190, 199, 214], { lit: 1 }),
     cable:    M([10, 16, 28],  [120, 131, 150]),
 
     /* emissive — these ignore lighting and glow */
@@ -75,7 +79,11 @@
       rim: { dir: E.norm([-0.80, 0.22, -0.48]), c: [47, 227, 240], i: 1.55, p: 2.2 },
       fill:{ dir: E.norm([-0.3, -0.25, 0.7]), c: [20, 48, 84], i: 0.28 },
       ground: 'rgba(0,0,0,0.42)',
-      glow: 1
+      glow: 1,
+      /* the lift applied to `lit` materials: a gain on what the lights
+         already gave them, plus a floor so the darkest faces still come
+         off black. Day needs neither — it is bright everywhere. */
+      subject: { m: 1.52, a: 15 }
     },
     day: {
       bgTop: '#EEF2F8', bgBot: '#DCE4EE',
@@ -85,7 +93,8 @@
       rim: { dir: E.norm([-0.7, 0.2, -0.6]), c: [0, 178, 192], i: 0.30, p: 3.0 },
       fill:{ dir: E.norm([-0.35, -0.2, 0.65]), c: [196, 212, 232], i: 0.30 },
       ground: 'rgba(38,52,74,0.16)',
-      glow: 0.35
+      glow: 0.35,
+      subject: { m: 1, a: 0 }
     }
   };
 
@@ -385,6 +394,8 @@
       return 'rgb(' + (e[0] | 0) + ',' + (e[1] | 0) + ',' + (e[2] | 0) + ')';
     }
 
+    var sub = (mat.lit && t.subject) ? t.subject : null;
+
     // view vector; flip the normal toward the camera so both sides light sanely
     var vx = cam.eye[0] - centroid[0], vy = cam.eye[1] - centroid[1], vz = cam.eye[2] - centroid[2];
     var vl = Math.hypot(vx, vy, vz) || 1;
@@ -416,6 +427,7 @@
       base[1] * lg + t.rim.c[1] * rim,
       base[2] * lb + t.rim.c[2] * rim
     ];
+    if (sub) { c[0] = c[0] * sub.m + sub.a; c[1] = c[1] * sub.m + sub.a; c[2] = c[2] * sub.m + sub.a; }
     c = fogMix(c, depth, t, mat);
     return 'rgb(' + clamp255(c[0] | 0) + ',' + clamp255(c[1] | 0) + ',' + clamp255(c[2] | 0) + ')';
   }
