@@ -408,26 +408,42 @@ Deutsch ist die Standardsprache und steht direkt im HTML; Englisch liegt in
 Blöcke teilen sich dieselben Schlüssel — eine weitere Sprache ist ein
 weiterer Block.
 
-## Entfernt: Buchhaltung
+## Entfernt: Buchhaltung und Steuer
 
-Der Bereich „Buchhaltung & Kooperationspartner“ ist auf Wunsch des Inhabers
-vollständig entfallen — mit ihm der Menüpunkt, der Themeneintrag im
-Anfrageformular, die entsprechende Zeile im Gründerpaket und alle Textbausteine
-`acc.*`. Zwei Dinge sind dabei bewusst stehen geblieben:
+Auf Wunsch des Inhabers ist alles entfallen, was mit Buchhaltung oder Steuern zu
+tun hat:
 
-- Im Impressum der Satz „Rheinland Digitalwerk erbringt keine Rechts-, Steuer-
-  oder Buchhaltungsberatung.“ Er beschreibt keine Leistung, sondern grenzt ab —
-  und das bleibt sinnvoll, solange „Marketing- & Vertriebsberatung“ angeboten
-  wird. Der zweite Satz, der die Vermittlung an Berufsträger beschrieb, ist
-  entfallen. Die USt-IdNr. bleibt ohnehin: sie ist eine Pflichtangabe im
-  Impressum, keine Buchhaltungsleistung.
-- Der Schlüssel `ct.o9` im Themenfeld ist ersatzlos entfallen, die übrigen
-  behalten ihre Nummern. Ein Durchnummerieren hätte jede Zeile im Formular und
-  in beiden Sprachblöcken angefasst, um nichts zu gewinnen.
+- der Bereich „Buchhaltung & Kooperationspartner“ samt Menüpunkt, dem
+  Themeneintrag im Anfrageformular, der Zeile im Gründerpaket, allen
+  Textbausteinen `acc.*` in beiden Sprachen und dem zugehörigen CSS;
+- im Impressum der Abschnitt „Umsatzsteuer-Identifikationsnummer“ und der
+  Abschnitt „Berufsrechtliche Hinweise“ mit dem Satz, dass keine Rechts-,
+  Steuer- oder Buchhaltungsberatung erbracht wird.
 
-Die Aufnahme aus dem Bereich ist nicht mit verschwunden: sie steht jetzt unter
-den Profil-Links im Kontaktbereich, wo die linke Spalte vorher lange vor dem
-Formular daneben zu Ende war.
+**Wichtig für den Livegang:** Der Abschnitt zur Umsatzsteuer-Identifikationsnummer
+war keine Leistung, sondern eine Pflichtangabe. § 5 DDG (zuvor § 5 TMG) verlangt
+die USt-IdNr. im Impressum, sobald das Unternehmen eine hat. Wer keine hat, ist
+davon nicht betroffen. Die Entscheidung liegt beim Inhaber; wenn eine USt-IdNr.
+existiert, gehört dieser Abschnitt vor dem Livegang zurück ins Impressum:
+
+```html
+<h2>Umsatzsteuer-Identifikationsnummer</h2>
+<p>USt-IdNr. gemäß § 27 a Umsatzsteuergesetz: [Nummer]</p>
+```
+
+Zwei Stellen sind bewusst geblieben, weil sie von etwas anderem handeln: der
+Hinweis im Leistungsbereich, dass keine bestimmte **Umsatz**steigerung garantiert
+wird — der meint den Geschäftserfolg, nicht die Steuer —, und der Satz in der
+Datenschutzerklärung über gesetzliche Aufbewahrungspflichten, der zur
+Löschfrist gehört und ohne den der Abschnitt unvollständig wäre.
+
+Der Schlüssel `ct.o9` im Themenfeld ist ersatzlos entfallen, die übrigen behalten
+ihre Nummern. Ein Durchnummerieren hätte jede Zeile im Formular und in beiden
+Sprachblöcken angefasst, um nichts zu gewinnen.
+
+Die Aufnahme aus dem entfallenen Bereich ist nicht mit verschwunden: sie steht
+jetzt unter den Profil-Links im Kontaktbereich, wo die linke Spalte vorher lange
+vor dem Formular daneben zu Ende war.
 
 ## Vor dem Livegang zu erledigen
 
@@ -436,8 +452,11 @@ Formular daneben zu Ende war.
       jeweils über einem `TODO`-Kommentar: in der Liste `.socials` im
       Kontaktabschnitt und im Menü des Roboters unten rechts. Platzhalter sind
       `wa.me/4900000000000`, `linkedin.com`, `instagram.com`, `facebook.com`
-- [ ] Impressum vervollständigen: Anschrift, USt-IdNr. bzw. Hinweis auf
-      Kleinunternehmerregelung, ggf. Registereintrag
+- [ ] Impressum vervollständigen: Anschrift, ggf. Registereintrag
+- [ ] Prüfen, ob eine USt-IdNr. besteht. Falls ja, gehört der Abschnitt dazu
+      zurück ins Impressum — er wurde auf Wunsch entfernt, ist aber nach
+      § 5 DDG eine Pflichtangabe, sobald eine Nummer existiert (siehe oben,
+      „Entfernt: Buchhaltung und Steuer“)
 - [ ] Datenschutzerklärung an Hosting und eingesetzte Dienste anpassen und
       fachkundig prüfen lassen
 - [ ] Kontaktformular an einen echten Endpunkt hängen. Aktuell baut
