@@ -318,34 +318,24 @@ Verzögerung, und nehmen beim Überfahren die Farbe ihres Dienstes an; für den
 Tagmodus sind die Markenfarben abgedunkelt, damit sie auf hellem Grund nicht
 schreien. Die Profil-Adressen sind Platzhalter (siehe Liste unten).
 
-Unten rechts schwebt zusätzlich ein kleiner Astronaut: Kuppelhelm mit
-undurchsichtigem Visier und zwei wandernden Spiegelungen, weißer Anzug mit
-cyanfarbener Kontur, orangefarbenen Bändern an Armen, Beinen und Kragen, eine
-Leine, die hinter dem Rückenteil heraus einen Bogen schlägt, und auf der Brust
-„KONTAKT“. Er reagiert auf das Scrollen — jeder Scrollschritt gibt ihm einen
-Impuls nach oben oder unten, eine gedämpfte Feder trägt ihn dorthin und wieder
-zurück, und die beiden Düsen unter den Stiefeln brennen heller, solange er
-unterwegs ist. Die Schleife läuft nur, während er sich bewegt, und hält sich
-selbst an, sobald er wieder ruhig in seiner Parkposition steht.
-
-Gezeichnet wird von hinten nach vorn: Leine, Düsen und Rückenteil zuerst, dann
-die Gliedmaßen, darüber der Rumpf, und der Helm zuletzt — so sitzt er vor dem
-Kragen, wie ein Helm es tut. Eine Sache, die beim nächsten Umbau leicht
-danebengeht: Anzug und Visier sind hier andersherum belegt als beim Roboter in
-der Hero-Szene. Dort ist die Hülle dunkel und das Visierband hell; hier ist der
-Anzug hell und das Visier dunkel.
+Unten rechts sitzt zusätzlich ein kleiner Roboter, gebaut wie der aus der
+Hero-Szene: kantiger Kopf, leuchtendes Visierband, orangefarbene Antenne, auf
+dem Bauch „CONTACT US“. Er reagiert auf das Scrollen — jeder Scrollschritt gibt
+ihm einen Impuls nach oben oder unten, eine gedämpfte Feder trägt ihn dorthin
+und wieder zurück, und seine Düsen brennen heller, solange er unterwegs ist.
+Die Schleife läuft nur, während er sich bewegt, und hält sich selbst an,
+sobald er wieder ruhig in seiner Parkposition steht.
 
 Ein Klick öffnet die Auswahl: E-Mail und dieselben vier Netzwerke. Das Menü
 schließt bei Klick daneben, bei `Escape` und nachdem ein Link gefolgt wurde.
 
-Die Brustbeschriftung wechselt mit der Sprache: auf Deutsch „KONTAKT“ in einer
+Die Bauchbeschriftung wechselt mit der Sprache: auf Deutsch „KONTAKT“ in einer
 Zeile, auf Englisch „CONTACT US“ in zweien. Deshalb kann sie im Markup nicht
 von Hand eingepasst werden — `fitBelly()` misst jede Zeile, drückt sie über
 `textLength` nur dann auf die Plattenbreite, wenn sie sonst überliefe, und
 zentriert eine einzelne Zeile, statt sie oben stehen zu lassen. Aufgerufen wird
 sie beim Aufbau, nach jedem Sprachwechsel und noch einmal, wenn die Schriften
-geladen sind. `BELLY_W` und die beiden y-Werte darin gehören zur Brustplatte im
-SVG: wer die Platte verschiebt oder ihre Breite ändert, muss sie mitziehen.
+geladen sind.
 
 ## Leistungskacheln
 

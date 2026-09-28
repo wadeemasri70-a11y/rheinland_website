@@ -798,7 +798,7 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 }
 
 .fab-bot{
-  width:92px; height:117px; padding:0; border:0; background:none; cursor:pointer;
+  width:94px; height:111px; padding:0; border:0; background:none; cursor:pointer;
   display:block; -webkit-tap-highlight-color:transparent;
 }
 .fab-bot-inner{
@@ -815,29 +815,17 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
   filter:drop-shadow(0 14px 18px rgba(0,0,0,.34)); }
 :root[data-theme="day"] .fab-svg{ filter:drop-shadow(0 12px 16px rgba(17,32,58,.22)); }
 
-/* the suit: white shell, cyan contour, orange bands */
-.fb-suit{ fill:var(--fb-suit); stroke:var(--fb-edge); stroke-width:1.3; }
-.fb-pack{ fill:var(--fb-pack); stroke:var(--fb-edge); stroke-width:1.1; }
-.fb-band{ fill:#E4791E; }
-.fb-stud{ fill:#E4791E; }
+.fb-shell{ fill:var(--fb-shell); stroke:var(--fb-edge); stroke-width:1.2; }
 .fb-belly{ fill:var(--fb-panel); }
-.fb-tether{
-  fill:none; stroke:var(--fb-edge); stroke-width:2.2; stroke-linecap:round;
-  transform-origin:57px 58px;
-  animation:fabTether 5.2s ease-in-out infinite;
-}
-
-/* the dome: an opaque visor with two reflections drifting across it */
-.fb-helmet{ fill:var(--fb-suit); stroke:var(--fb-edge); stroke-width:1.5; }
 .fb-visor{ fill:var(--fb-visor); }
-.fb-glint{ fill:#FFFFFF; opacity:.82; }
-.fb-glint-sm{ opacity:.5; }
-.fb-glints{ animation:fabGlint 5.6s ease-in-out infinite; }
-
+.fb-eye{ fill:var(--fb-eyes); animation:fabBlink 6.2s infinite; }
+.fb-stem{ stroke:var(--fb-edge); stroke-width:2.4; stroke-linecap:round; fill:none; }
+.fb-bulb{ fill:#E4791E; animation:fabBulb 3.1s ease-in-out infinite; }
+.fb-ant{ transform-origin:36px 16px; animation:fabAnt 4.4s ease-in-out infinite; }
 /* The label changes with the language, so its size is settled in script
    (see fitBelly) rather than tuned to one word here. */
 .fb-text{
-  fill:var(--fb-ink); font-family:var(--f-body); font-weight:700;
+  fill:var(--fb-visor); font-family:var(--f-body); font-weight:700;
   font-size:7px; letter-spacing:.2px; text-anchor:middle;
 }
 .fb-text[hidden]{ display:none; }
@@ -855,26 +843,26 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 }
 :root[data-theme="day"] .fab-shadow{ background:radial-gradient(closest-side, rgba(17,32,58,.28), transparent); }
 
-/* The visor is the dark one here and the suit the light one — the reverse
-   of the shell/visor pairing the little robot in the hero uses. */
 :root, :root[data-theme="night"]{
-  --fb-suit:#DCE5F2; --fb-pack:#AFBDD2; --fb-edge:#3FD8E6;
-  --fb-visor:#0C1D36; --fb-panel:#0C1D36; --fb-ink:#5FE9F5;
+  --fb-shell:#1E3150; --fb-edge:#3D5F8C; --fb-panel:#09111F;
+  --fb-visor:#5FE9F5; --fb-eyes:#04202B;
 }
 :root[data-theme="day"]{
-  --fb-suit:#FFFFFF; --fb-pack:#C9D4E4; --fb-edge:#0C7C8A;
-  --fb-visor:#11243F; --fb-panel:#11243F; --fb-ink:#4FDDEC;
+  --fb-shell:#D7DFEA; --fb-edge:#9AAAC0; --fb-panel:#16263F;
+  --fb-visor:#3BC6D6; --fb-eyes:#0A1A2B;
 }
 
-/* the reflections slide a little, so the dome reads as glass */
-@keyframes fabGlint{
-  0%,100%{ translate:0 0; opacity:1; }
-  50%    { translate:2.2px 1.1px; opacity:.72; }
+@keyframes fabBlink{
+  0%,92%,100%{ scale:1 1; }
+  95%{ scale:1 .1; }
 }
-/* the tether trails behind the suit */
-@keyframes fabTether{
-  0%,100%{ rotate:-2.5deg; }
-  50%    { rotate:2.5deg; }
+@keyframes fabBulb{
+  0%,100%{ opacity:.55; }
+  50%{ opacity:1; }
+}
+@keyframes fabAnt{
+  0%,100%{ rotate:-5deg; }
+  50%{ rotate:5deg; }
 }
 
 .fab-bot:hover .fab-bot-inner{ animation-duration:2.6s; }
@@ -920,11 +908,11 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 :root[data-theme="day"] .fo-fb{ --soc:#1559CF; }
 
 @media (max-width:620px){
-  .fab-bot{ width:76px; height:97px; }
+  .fab-bot{ width:78px; height:92px; }
   .fab-menu{ width:198px; }
 }
 @media (prefers-reduced-motion:reduce){
   .fab-bot-inner{ animation:none; transform:none; }
-  .fb-glints,.fb-tether{ animation:none; }
+  .fb-ant,.fb-bulb,.fb-eye{ animation:none; }
   .fab-menu{ animation:none; }
 }

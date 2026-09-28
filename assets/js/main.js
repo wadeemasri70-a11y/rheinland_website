@@ -881,7 +881,7 @@
        fitted by hand in the markup. Each line is measured and squeezed to
        the belly panel only if it would otherwise run over it, and a single
        line is re-centred rather than left sitting high. */
-    var BELLY_W = 30;          // usable width of the chest panel, in viewBox units
+    var BELLY_W = 36;          // usable width of the panel, in viewBox units
     var belly1 = document.getElementById('fabBelly1');
     var belly2 = document.getElementById('fabBelly2');
 
@@ -897,7 +897,7 @@
       if (!belly1) return;
       var two = !!(belly2 && belly2.textContent.trim());
       if (belly2) belly2.hidden = !two;
-      belly1.setAttribute('y', two ? '59.2' : '64.6');
+      belly1.setAttribute('y', two ? '49.4' : '55.2');
       fitLine(belly1);
       if (two) fitLine(belly2);
     }
