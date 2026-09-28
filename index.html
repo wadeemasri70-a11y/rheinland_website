@@ -647,32 +647,58 @@
   <button class="fab-bot" id="fabBot" type="button" aria-expanded="false" aria-controls="fabMenu"
           data-i18n-aria="fab.aria" aria-label="Kontaktmöglichkeiten öffnen">
     <span class="fab-bot-inner" aria-hidden="true">
-      <svg class="fab-svg" viewBox="0 0 72 86">
-        <!-- exhaust: two small jets that stretch when the robot moves -->
+      <!-- A small astronaut: dome helmet, white suit, orange bands. Drawn
+           back to front — tether, jets and pack first, then the limbs, the
+           torso over them, and the helmet last so it sits in front of the
+           collar the way a helmet does. -->
+      <svg class="fab-svg" viewBox="0 0 80 102">
+        <!-- the tether, looping out from behind the pack -->
+        <path class="fb-tether" d="M57 58 C 72 62, 77 78, 67 88 C 61 94, 52 92, 50 85"/>
+
+        <!-- two short bursts under the boots; they brighten while he moves -->
         <g class="fb-jets">
-          <path class="fb-jet" d="M23 68 q3 9 0 14 q-3-5 0-14z"/>
-          <path class="fb-jet" d="M49 68 q3 9 0 14 q-3-5 0-14z"/>
+          <path class="fb-jet" d="M33 92 q2.4 6.5 0 9.8 q-2.4-3.6 0-9.8z"/>
+          <path class="fb-jet" d="M47 92 q2.4 6.5 0 9.8 q-2.4-3.6 0-9.8z"/>
         </g>
-        <!-- antenna -->
-        <g class="fb-ant">
-          <path class="fb-stem" d="M36 16 V8"/>
-          <circle class="fb-bulb" cx="36" cy="6" r="3.4"/>
+
+        <!-- life-support pack: wider than the torso at the top, so it shows
+             as two shoulder pads either side of the helmet -->
+        <rect class="fb-pack" x="21" y="42.5" width="38" height="30" rx="10"/>
+
+        <!-- arms: the right one raised in a wave -->
+        <g class="fb-arm">
+          <rect class="fb-suit" x="9"  y="50" width="10" height="21" rx="5"/>
+          <rect class="fb-band" x="9"  y="61.5" width="10" height="3.6" rx="1.8"/>
         </g>
-        <!-- head with the visor band -->
-        <rect class="fb-shell" x="19" y="14" width="34" height="21" rx="7.5"/>
-        <rect class="fb-visor" x="22.5" y="20" width="27" height="8.6" rx="4.3"/>
-        <circle class="fb-eye" cx="30" cy="24.3" r="2"/>
-        <circle class="fb-eye" cx="42" cy="24.3" r="2"/>
-        <!-- arms -->
-        <rect class="fb-shell" x="5" y="42" width="7" height="17" rx="3.5"/>
-        <rect class="fb-shell" x="60" y="42" width="7" height="17" rx="3.5"/>
-        <!-- body with the belly panel -->
-        <rect class="fb-shell" x="12" y="37" width="48" height="29" rx="9"/>
-        <rect class="fb-belly" x="15.5" y="40.8" width="41" height="21.4" rx="6"/>
+        <g class="fb-arm fb-arm-up">
+          <rect class="fb-suit" x="62" y="46" width="10" height="21" rx="5"/>
+          <rect class="fb-band" x="62" y="57.5" width="10" height="3.6" rx="1.8"/>
+        </g>
+
+        <!-- legs -->
+        <rect class="fb-suit" x="27" y="73" width="12" height="20" rx="6"/>
+        <rect class="fb-band" x="27" y="83" width="12" height="3.6" rx="1.8"/>
+        <rect class="fb-suit" x="41" y="73" width="12" height="20" rx="6"/>
+        <rect class="fb-band" x="41" y="83" width="12" height="3.6" rx="1.8"/>
+
+        <!-- torso, then the collar over it: drawn under the torso it would
+             be swallowed whole, since the helmet covers everything above -->
+        <rect class="fb-suit" x="19" y="46" width="42" height="32" rx="12"/>
+        <rect class="fb-band" x="28" y="44" width="24" height="6.5" rx="3.25"/>
+        <circle class="fb-stud" cx="40" cy="74.6" r="2.4"/>
+        <rect class="fb-belly" x="22.5" y="50.5" width="35" height="21" rx="6"/>
         <!-- two lines, because the label is one word in German and two in
              English. fitBelly() in main.js centres and fits whatever lands. -->
-        <text class="fb-text" id="fabBelly1" x="36" y="49.4" lengthAdjust="spacingAndGlyphs" data-i18n="fab.belly1">KONTAKT</text>
-        <text class="fb-text" id="fabBelly2" x="36" y="58.4" lengthAdjust="spacingAndGlyphs" data-i18n="fab.belly2"></text>
+        <text class="fb-text" id="fabBelly1" x="40" y="59.2" lengthAdjust="spacingAndGlyphs" data-i18n="fab.belly1">KONTAKT</text>
+        <text class="fb-text" id="fabBelly2" x="40" y="68" lengthAdjust="spacingAndGlyphs" data-i18n="fab.belly2"></text>
+
+        <!-- the helmet, in front of the collar -->
+        <ellipse class="fb-helmet" cx="40" cy="26" rx="22" ry="20.5"/>
+        <ellipse class="fb-visor"  cx="40" cy="27" rx="17.4" ry="15.4"/>
+        <g class="fb-glints">
+          <ellipse class="fb-glint" cx="31.5" cy="19.5" rx="5.4" ry="3.4" transform="rotate(-30 31.5 19.5)"/>
+          <ellipse class="fb-glint fb-glint-sm" cx="46.5" cy="32" rx="3.6" ry="1.8" transform="rotate(-26 46.5 32)"/>
+        </g>
       </svg>
       <span class="fab-shadow"></span>
     </span>
