@@ -543,6 +543,8 @@
 
         <div class="machine-viewport">
     <form class="contact-form" id="contactForm" novalidate>
+      <!-- spam trap: people never see or tick it, bots fill in everything -->
+      <input type="checkbox" name="botcheck" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div class="f-row">
         <label class="field">
           <span data-i18n="ct.f1">Name *</span>
@@ -596,8 +598,8 @@
               <svg viewBox="0 0 34 34"><path d="M8 17.5l6 6 12-13" fill="none" stroke="currentColor"
                 stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
-            <h3 data-i18n="mch.doneTitle">Anfrage fertig</h3>
-            <p data-i18n="mch.doneBody">Ihr E-Mail-Programm wurde mit der fertigen Anfrage geöffnet — bitte nur noch absenden.</p>
+            <h3 id="doneTitle" data-i18n="mch.doneTitle">Anfrage fertig</h3>
+            <p id="doneBody" data-i18n="mch.doneBody">Ihr E-Mail-Programm wurde mit der fertigen Anfrage geöffnet — bitte nur noch absenden.</p>
             <button class="btn btn-ghost btn-sm" type="button" id="machineAgain" data-i18n="mch.doneAgain">Neue Anfrage</button>
           </div>
         </div><!-- /machine-viewport -->

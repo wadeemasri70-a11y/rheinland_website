@@ -158,6 +158,10 @@ window.I18N = {
     'mch.doneTitle': 'Anfrage fertig',
     'mch.doneBody': 'Ihr E-Mail-Programm wurde mit der fertigen Anfrage geöffnet — bitte nur noch absenden.',
     'mch.doneAgain': 'Neue Anfrage',
+    'mch.sentTitle': 'Anfrage gesendet',
+    'mch.sentBody': 'Danke! Ihre Nachricht ist bei uns angekommen. Wir melden uns in der Regel innerhalb eines Werktags.',
+    'ct.sending': 'Wird gesendet …',
+    'ct.sendFail': 'Senden hat nicht geklappt. Bitte versuchen Sie es erneut oder schreiben Sie direkt an info@rheinlanddigitalwerk.de.',
     'theme.toNight': 'Zum Nachtmodus wechseln',
     'theme.toDay': 'Zum Tagmodus wechseln'
   },
@@ -370,6 +374,10 @@ window.I18N = {
     'mch.doneTitle': 'Enquiry ready',
     'mch.doneBody': 'Your email programme has opened with the message ready — just send it.',
     'mch.doneAgain': 'New enquiry',
+    'mch.sentTitle': 'Enquiry sent',
+    'mch.sentBody': 'Thank you! Your message has reached us. We usually reply within one working day.',
+    'ct.sending': 'Sending …',
+    'ct.sendFail': 'Sending did not work. Please try again or write to info@rheinlanddigitalwerk.de directly.',
     'theme.toNight': 'Switch to night mode',
     'theme.toDay': 'Switch to day mode'
   }

@@ -821,12 +821,28 @@
   }());
 
   /* ── contact form ────────────────────────────────────────────────────
-     No backend yet: the form composes a complete message and hands it to
-     the visitor's mail client. Replace this submit handler with a POST to
-     a form endpoint once hosting is decided.
+     With a Web3Forms access key the enquiry is posted straight to the
+     company inbox. Without one the form falls back to composing it in the
+     visitor's mail client. The key is not a secret: it only tells
+     Web3Forms which inbox to deliver to, and it is meant to sit in the
+     page.
      ──────────────────────────────────────────────────────────────────── */
 
   var TARGET_MAIL = 'info@rheinlanddigitalwerk.de';
+  var FORM_KEY = '';
+  var FORM_URL = 'https://api.web3forms.com/submit';
+
+  /* sent directly, the confirmation says so rather than pointing at a
+     mail programme */
+  if (FORM_KEY) {
+    var doneT = document.getElementById('doneTitle');
+    var doneB = document.getElementById('doneBody');
+    if (doneT) doneT.setAttribute('data-i18n', 'mch.sentTitle');
+    if (doneB) doneB.setAttribute('data-i18n', 'mch.sentBody');
+    var dict0 = (window.I18N || {})[lang] || {};
+    if (doneT && dict0['mch.sentTitle']) doneT.textContent = dict0['mch.sentTitle'];
+    if (doneB && dict0['mch.sentBody']) doneB.textContent = dict0['mch.sentBody'];
+  }
   var form = document.getElementById('contactForm');
   var status = document.getElementById('formStatus');
 
@@ -862,11 +878,47 @@
         'Phone:    ' + g('phone') + '\n' +
         'Topic:    ' + g('topic') + '\n\n' + g('message') + '\n';
 
-      window.location.href = 'mailto:' + TARGET_MAIL +
-        '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+      if (!FORM_KEY) {
+        window.location.href = 'mailto:' + TARGET_MAIL +
+          '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 
-      if (status) { status.textContent = ''; status.className = 'form-status'; }
-      if (window.RDW_MACHINE) window.RDW_MACHINE.done();
+        if (status) { status.textContent = ''; status.className = 'form-status'; }
+        if (window.RDW_MACHINE) window.RDW_MACHINE.done();
+        return;
+      }
+
+      var btn = form.querySelector('[type="submit"]');
+      if (btn) btn.disabled = true;
+      if (status) { status.textContent = dict['ct.sending'] || ''; status.className = 'form-status'; }
+
+      fetch(FORM_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          access_key: FORM_KEY,
+          subject: subject,
+          from_name: 'Website Rheinland Digitalwerk',
+          name: g('name'),
+          email: g('email'),
+          replyto: g('email'),
+          company: g('company'),
+          phone: g('phone'),
+          topic: g('topic'),
+          message: g('message'),
+          botcheck: d.get('botcheck') ? true : ''
+        })
+      }).then(function (r) {
+        return r.json().then(function (j) { return r.ok && j && j.success; });
+      }).then(function (ok) {
+        if (!ok) throw new Error('rejected');
+        if (status) { status.textContent = ''; status.className = 'form-status'; }
+        if (window.RDW_MACHINE) window.RDW_MACHINE.done();
+      }).catch(function () {
+        var dd = (window.I18N || {})[lang] || {};
+        if (status) { status.textContent = dd['ct.sendFail'] || ''; status.className = 'form-status err'; }
+      }).then(function () {
+        if (btn) btn.disabled = false;
+      });
     });
   }
 
