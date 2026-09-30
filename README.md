@@ -65,8 +65,15 @@ erweitert:
 
 - **Timing** steht gesammelt im Objekt `T` in `anim3d.js`. Die Länge der
   Schleife ergibt sich aus `T.loop`; die Phasen nach dem letzten Sprung
-  (`tireTo`, `flopTo`, `restTo`, `fadeTo`) hängen aneinander, sodass eine
-  Änderung am Hüpfen den Rest automatisch nachzieht.
+  (`downTo`, `fwdTo`, `greetFrom`, `waveFrom`, `greetTo`, `tireTo`,
+  `flopTo`, `restTo`, `fadeTo`) hängen aneinander, sodass eine Änderung am
+  Hüpfen den Rest automatisch nachzieht.
+- **Der Schluss:** Nach der letzten Codezeile springt der Roboter vor dem
+  Laptop auf den Tisch, läuft nach vorn zur Kamera (`STAGE`, Blick nach
+  `FACE_CAM`), macht einen Freudensprung mit hochgerissenen Armen, winkt,
+  und erst dann geht ihm die Puste aus: er sackt zusammen, kippt auf den
+  Rücken und raucht. Beim Umkippen bleibt die Ferse auf dem Tisch
+  (`LIE` ist die Höhe im Liegen pro Maßstabseinheit).
 - **Der Stecker** liegt zu Beginn auf dem Tisch unter der Steckdose
   (`PLUG_REST`). Der Roboter kommt mit leeren Händen, beugt sich darüber,
   hebt ihn auf und greift damit nach oben.

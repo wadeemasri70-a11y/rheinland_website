@@ -4,9 +4,10 @@
    The beats, in order: the robot walks in along the desk dragging a cable,
    plugs it into the wall socket, a spark jumps, energy runs up the cable,
    the laptop boots, the robot climbs onto the keyboard and hops across it
-   writing one line of code per hop — then runs out of steam, sags, topples
-   onto its back across the keys, catches its breath, and the whole thing
-   fades out and starts again.
+   writing one line of code per hop — then jumps down, walks up to the
+   camera, hops and waves hello, runs out of steam, sags, topples onto its
+   back with a wisp of smoke, catches its breath, and the whole thing fades
+   out and starts again.
 
    Motion is deliberately unhurried; the brief asked for calm. Everything is
    driven off one keyframe timeline, so retiming means editing `T` only.
@@ -95,8 +96,13 @@
 
   /* one hop per line of code */
   var HOPS = CODE.length;
-  T.hopTo   = T.hopFrom + HOPS * T.hopEvery;   // 13750 + 7*880 = 19910
-  T.tireTo  = T.hopTo + 2300;                  // out of steam
+  T.hopTo   = T.hopFrom + HOPS * T.hopEvery;   // 13700 + 7*880 = 19860
+  T.downTo  = T.hopTo + 1100;                  // jumps down off the keyboard
+  T.fwdTo   = T.downTo + 1900;                 // walks up to the camera
+  T.greetFrom = T.fwdTo + 250;                 // a hop for joy …
+  T.waveFrom  = T.greetFrom + 800;
+  T.greetTo = T.waveFrom + 1500;               // … and waves hello
+  T.tireTo  = T.greetTo + 1600;                // out of steam
   T.flopTo  = T.tireTo + 950;                  // topples over
   T.restTo  = T.flopTo + 3000;                 // lies there breathing
   T.fadeTo  = T.restTo + 1100;                 // fade out
@@ -122,6 +128,39 @@
   function keyWorld(k) { return E.xform(laptop.world, [k.x, 2.35, k.z]); }
 
   var WALK_FROM = 118, SOCKET_X = 15;
+
+  /* After the last line of code the robot jumps down in front of the
+     laptop and walks up to the front of the desk to say hello. It keeps the
+     size it grew into on the keyboard. */
+  var DESK_SCALE = 1.12;
+  var STAGE = [42, 0, 18];
+  var FACE_CAM = Math.atan2(-(94 - STAGE[2]), 68 - STAGE[0]);   // looking into the camera
+  var LIE = 3.45;            // root height, per unit of scale, once lying on its back
+
+  function landWorld() {
+    var k = KEYS[HOP_KEYS[Math.min(HOP_KEYS.length - 1, HOPS)]];
+    return E.xform(laptop.world, [17.5, 0, k.z]);             // just in front of the laptop
+  }
+
+  /* shortest way round from one heading to another */
+  function turnTo(a, b, p) {
+    var d = b - a;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    return a + d * p;
+  }
+
+  /* a jump from one spot to another: crouch, a parabola, and the landing
+     absorbed — the same three parts as a hop on the keys */
+  function jump(p, H) {
+    var CROUCH = 0.6, LANDK = 0.55, ap = 0.2, fl = 0.6;
+    if (p < ap) return { move: 0, arc: 0, lift: -CROUCH * Math.sin((p / ap) * Math.PI / 2) };
+    if (p < ap + fl) {
+      var q = (p - ap) / fl, arc = 4 * q * (1 - q);
+      return { move: q, arc: arc, lift: -CROUCH * (1 - q) * (1 - q) + H * arc };
+    }
+    return { move: 1, arc: 0, lift: -LANDK * Math.sin(((p - ap - fl) / (1 - ap - fl)) * Math.PI) };
+  }
   var SOCK = S.SOCKET;
 
   /* The plug lies on the desk directly beneath the wall socket, where a
@@ -272,27 +311,64 @@
         if (hopP < 0.30) st.litKey = HOP_KEYS[Math.min(HOP_KEYS.length - 1, hopIndex)];
       } else {
         var last = keyWorld(KEYS[HOP_KEYS[Math.min(HOP_KEYS.length - 1, HOPS)]]);
-        x = last[0]; z = last[2]; ground = last[1];
+        var land = landWorld();
+        var HEAD_DOWN = Math.atan2(-(land[2] - last[2]), land[0] - last[0]);
+        var HEAD_FWD = Math.atan2(-(STAGE[2] - land[2]), STAGE[0] - land[0]);
+        onKeys = false;
+        scale = DESK_SCALE;
 
-        if (t < T.tireTo) {
-          /* ---- out of steam: the robot sags and sways ---- */
-          var f = clamp01((t - T.hopTo) / (T.tireTo - T.hopTo));
-          lean = track([[T.hopTo, 0, 'linear'], [T.tireTo, 13, 'soft']], t);
-          roll = Math.sin((t - T.hopTo) * 0.0034) * 5.5 * f;
-          lift = -1.0 * f + Math.sin((t - T.hopTo) * 0.0021) * 0.42 * f;  // heavy breathing
-        } else if (t < T.flopTo) {
-          /* ---- topples onto its back across the keys ---- */
-          var fp = (t - T.tireTo) / (T.flopTo - T.tireTo);
-          tip = Ease.topple(fp) * Math.PI * 0.5;
-          lean = 13 * (1 - fp);
-          roll = 5.5 * (1 - fp);
-          lift = -1.0 + 3.1 * Ease.out(clamp01(fp * 1.4));
+        if (t < T.downTo) {
+          /* ---- jumps down off the keyboard onto the desk ---- */
+          var dp = (t - T.hopTo) / (T.downTo - T.hopTo);
+          var jd = jump(dp, 5.5);
+          onKeys = jd.move === 0;
+          x = lerp(last[0], land[0], jd.move);
+          z = lerp(last[2], land[2], jd.move);
+          ground = lerp(last[1], 0, jd.move);
+          scale = lerp(KEY_SCALE, DESK_SCALE, Ease.soft(jd.move));
+          lift = jd.lift;
+          hopArc = jd.arc;
+          lean = 9 * Math.sin(Math.min(1, dp / 0.8) * Math.PI);
+          face = turnTo(Math.PI * 2 + 0.55, HEAD_DOWN, Ease.soft(clamp01(dp / 0.3)));
+        } else if (t < T.fwdTo) {
+          /* ---- walks up to the front of the desk ---- */
+          var wp = (t - T.downTo) / (T.fwdTo - T.downTo);
+          var mv = Ease.inOut(clamp01((t - T.downTo - 150) / (T.fwdTo - T.downTo - 400)));
+          x = lerp(land[0], STAGE[0], mv);
+          z = lerp(land[2], STAGE[2], mv);
+          face = turnTo(HEAD_DOWN, HEAD_FWD, Ease.soft(clamp01(wp / 0.2)));
+          face = turnTo(face, FACE_CAM, Ease.soft(clamp01((wp - 0.78) / 0.22)));
         } else {
-          /* ---- lying down, catching its breath ---- */
-          var rp = clamp01((t - T.flopTo) / 420);
-          var bounce = Math.sin(rp * Math.PI) * 0.55 * (1 - rp);
-          tip = Math.PI * 0.5 + Math.sin(rp * Math.PI * 2) * 0.05 * (1 - rp);
-          lift = 3.1 + bounce + Math.sin((t - T.flopTo) * 0.0016) * 0.20;
+          x = STAGE[0]; z = STAGE[2];
+          face = FACE_CAM;
+
+          if (t < T.greetTo) {
+            /* ---- a hop for joy, then a wave ---- */
+            if (t > T.greetFrom && t < T.waveFrom) {
+              var jg = jump((t - T.greetFrom) / (T.waveFrom - T.greetFrom), 4.2);
+              lift = jg.lift;
+              hopArc = jg.arc;
+            }
+          } else if (t < T.tireTo) {
+            /* ---- out of steam: the robot sags and sways ---- */
+            var f = clamp01((t - T.greetTo) / (T.tireTo - T.greetTo));
+            lean = track([[T.greetTo, 0, 'linear'], [T.tireTo, 13, 'soft']], t);
+            roll = Math.sin((t - T.greetTo) * 0.0034) * 5.5 * f;
+            lift = (0.2 + Math.sin((t - T.greetTo) * 0.0021) * 0.2) * f;       // heavy breathing
+          } else if (t < T.flopTo) {
+            /* ---- topples onto its back ---- */
+            var fp = (t - T.tireTo) / (T.flopTo - T.tireTo);
+            tip = Ease.topple(fp) * Math.PI * 0.5;
+            lean = 13 * (1 - fp);
+            roll = 5.5 * (1 - fp);
+            lift = 0.16 * (1 - fp) + LIE * scale * Math.pow(tip / (Math.PI * 0.5), 1.5);  // heel stays on the desk
+          } else {
+            /* ---- lying down, catching its breath ---- */
+            var rp = clamp01((t - T.flopTo) / 420);
+            var bounce = Math.sin(rp * Math.PI) * 0.55 * (1 - rp);
+            tip = Math.PI * 0.5 + Math.sin(rp * Math.PI * 2) * 0.05 * (1 - rp);
+            lift = LIE * scale + bounce + Math.sin((t - T.flopTo) * 0.0016) * 0.20;
+          }
         }
       }
     }
@@ -329,7 +405,8 @@
 
     var walking = (t > T.walkFrom && t < T.walkTo - 260)
                || (t > T.pickTo && t < T.carryTo - 200)
-               || (t > T.turn + 700 && t < T.runTo);
+               || (t > T.turn + 700 && t < T.runTo)
+               || (t > T.downTo + 100 && t < T.fwdTo - 250);
     var speed = t < T.carryTo ? 0.85 : 1.2;
 
     gait += ((walking ? 1 : 0) - gait) * Math.min(1, dt * 0.007);
@@ -344,7 +421,7 @@
       lean += 2.4 * speed * gait;
       roll += Math.cos(walkPhase) * 2.2 * speed * gait;
     }
-    if (gait < 0.9 && (!onKeys || t < T.hopTo)) {
+    if (gait < 0.9 && t < T.greetTo) {
       lift += Math.sin(t * 0.0016) * 0.16 * (1 - gait);   // idle breathing
     }
 
@@ -367,10 +444,25 @@
     /* How far off the ground the robot is, 0..1. Taken from the arc rather
        than from `lift`, because the hop height drops as the robot tires and
        dividing by a fixed height left the late hops with limp legs. */
-    var airborne = hopIndex >= 0 ? hopArc
+    var airborne = hopArc > 0 ? hopArc
                  : (t >= T.runTo && t <= T.climbTo) ? Math.sin((t - T.runTo) / (T.climbTo - T.runTo) * Math.PI) : 0;
 
-    if (tip > 0.05) {
+    /* the greeting: arms flung up for the hop, then the near arm waves */
+    var cheer = (t > T.greetFrom && t < T.greetTo)
+      ? clamp01((t - T.greetFrom) / 200) * clamp01((T.greetTo - t) / 300) : 0;
+    var waving = (t > T.greetFrom && t < T.greetTo)
+      ? clamp01((t - T.waveFrom + 200) / 300) : 0;
+
+    if (cheer > 0) {
+      var up = cheer * (1 - waving);
+      var wv = Math.sin((t - T.waveFrom) * 0.0125) * waving;
+      var tuck2 = Math.pow(Math.max(0, airborne), 0.7);
+      rig.legF.setTRS([E.trans(0, 4.4, 2.1), E.rotZ(-0.5 * tuck2)]);
+      rig.legB.setTRS([E.trans(0, 4.4, -2.1), E.rotZ(0.4 * tuck2)]);
+      rig.armF.setTRS([E.trans(0, 5.6, 4.3), E.rotZ(0.25 * waving * cheer),
+                       E.rotX(-cheer * (2.3 + 0.35 * waving + 0.3 * wv))]);
+      rig.armB.setTRS([E.trans(0, 5.6, -4.3), E.rotX(up * 2.3 + cheer * waving * 0.12)]);
+    } else if (tip > 0.05) {
       /* sprawled: arms out, legs loose */
       var sp = clamp01(tip / (Math.PI * 0.5));
       rig.legF.setTRS([E.trans(0, 4.4, 2.1), E.rotZ(-0.42 * sp)]);
@@ -407,7 +499,7 @@
       ], t);
 
       /* tired arms hang heavier */
-      var sag = (t > T.hopTo && t < T.flopTo) ? clamp01((t - T.hopTo) / 2300) * 0.45 : 0;
+      var sag = (t > T.greetTo && t < T.flopTo) ? clamp01((t - T.greetTo) / (T.tireTo - T.greetTo)) * 0.45 : 0;
 
       rig.armF.setTRS([E.trans(0, 5.6, 4.3), E.rotZ((lifting ? armF : -armRad) - sag)]);
       rig.armB.setTRS([E.trans(0, 5.6, -4.3), E.rotZ(armRad - sag)]);
@@ -426,6 +518,10 @@
       [T.climbTo, 0, 'linear'],
       [T.climbTo + 600, -0.18, 'soft'],
       [T.hopTo, -0.18, 'linear'],
+      [T.downTo, 0.08, 'soft'],          // watches where it lands
+      [T.fwdTo, 0, 'soft'],
+      [T.greetFrom + 300, -0.16, 'soft'], // looks up into the camera
+      [T.greetTo, -0.16, 'linear'],
       [T.tireTo, 0.42, 'soft'],          // chin drops
       [T.flopTo, 0.10, 'soft'],
       [T.flopTo + 500, -0.12, 'soft']    // settles back looking up
@@ -441,7 +537,7 @@
 
     /* ---- eyes ---- */
     var lit = t < T.contact ? 0 : clamp01((t - T.contact) / 900);
-    var tired = t > T.hopTo ? clamp01((t - T.hopTo) / 2600) : 0;
+    var tired = t > T.greetTo ? clamp01((t - T.greetTo) / 1900) : 0;
     var blinkT = (t + 900) % 5200;
     var slow = t > T.flopTo ? ((t - T.flopTo) % 2400) < 380 : false;   // long, heavy blinks
     var blink = (blinkT < 150 || slow) ? 0 : 1;
@@ -510,7 +606,7 @@
     for (var i = 0; i < CODE.length; i++) {
       st.lines.push(clamp01((t - (T.hopFrom + i * T.hopEvery + 150)) / 500));
     }
-    st.caret = t > T.hopFrom && t < T.tireTo && (t % 1100) < 620;
+    st.caret = t > T.hopFrom && t < T.hopTo + 2300 && (t % 1100) < 620;
 
     return st;
   }
