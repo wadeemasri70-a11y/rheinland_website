@@ -891,27 +891,29 @@
       if (btn) btn.disabled = true;
       if (status) { status.textContent = dict['ct.sending'] || ''; status.className = 'form-status'; }
 
-      var payload = {
-          access_key: FORM_KEY,
-          subject: subject,
-          /* the enquiry shows up in the inbox under the visitor's own
-             name, and Reply goes straight back to their address */
-          from_name: g('name') || 'Website Rheinland Digitalwerk',
-          name: g('name'),
-          email: g('email'),
-          replyto: g('email'),
-          company: g('company'),
-          phone: g('phone'),
-          topic: (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '—',
-          message: g('message')
-      };
+      /* Sent as form data, not JSON. A JSON body makes the browser ask
+         the service for permission first (a CORS preflight), which it does
+         not answer — so every enquiry failed before it was ever sent. Form
+         data needs no such round trip. */
+      var out = new FormData();
+      out.append('access_key', FORM_KEY);
+      out.append('subject', subject);
+      /* the enquiry shows up in the inbox under the visitor's own name,
+         and Reply goes straight back to their address */
+      out.append('from_name', g('name') || 'Website Rheinland Digitalwerk');
+      out.append('name', g('name'));
+      out.append('email', g('email'));
+      out.append('replyto', g('email'));
+      out.append('company', g('company'));
+      out.append('phone', g('phone'));
+      out.append('topic', (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '—');
+      out.append('message', g('message'));
       // only a bot ticks the hidden box; people send no botcheck at all
-      if (d.get('botcheck')) payload.botcheck = true;
+      if (d.get('botcheck')) out.append('botcheck', 'true');
 
       fetch(FORM_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload)
+        body: out
       }).then(function (r) {
         return r.json().then(function (j) {
           var ok = r.ok && j && j.success;
