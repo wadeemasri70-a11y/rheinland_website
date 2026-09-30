@@ -635,6 +635,7 @@
        does not skew with the width. */
 
     var cableSvg = document.querySelector('.machine-cable');
+    var machineBody = document.querySelector('.machine-body');
     var STUB = 14;          // straight bit leaving the plug
     var PULL_OUT = 30;      // px of travel before the plug comes loose
 
@@ -643,11 +644,15 @@
       if (!box || !box.width) return null;
       var plug = plugBtn ? plugBtn.getBoundingClientRect() : null;
       if (!plug) return null;
+      /* the lead runs on down to the top edge of the box and ends on its
+         border, so it reads as plugged in rather than stopping in mid-air */
+      var body = machineBody ? machineBody.getBoundingClientRect() : null;
       return {
         w: box.width, h: box.height,
         px: plug.left - box.left + plug.width / 2,   // the plug's cable exit
         py: plug.top - box.top + plug.height,
-        ax: 8, ay: box.height - 6                    // where it meets the machine
+        ax: 8, ay: box.height - 6,                   // the run along the top
+        by: body ? body.top - box.top : box.height - 6
       };
     }
 
@@ -664,7 +669,8 @@
       return 'M' + px.toFixed(1) + ' ' + py.toFixed(1) +
              ' V' + stubY.toFixed(1) +
              ' L' + cornerX.toFixed(1) + ' ' + g.ay.toFixed(1) +
-             ' H' + g.ax;
+             ' H' + g.ax +
+             ' V' + g.by.toFixed(1);
     }
 
     /* The lead is redrawn from the plug's measured position, so it is tied
