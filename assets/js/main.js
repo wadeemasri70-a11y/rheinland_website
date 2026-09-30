@@ -829,7 +829,7 @@
      ──────────────────────────────────────────────────────────────────── */
 
   var TARGET_MAIL = 'info@rheinlanddigitalwerk.de';
-  var FORM_KEY = '';
+  var FORM_KEY = 'ad79ca8f-b57b-4812-bb28-b6602d901800';
   var FORM_URL = 'https://api.web3forms.com/submit';
 
   /* sent directly, the confirmation says so rather than pointing at a
