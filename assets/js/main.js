@@ -821,20 +821,20 @@
   }());
 
   /* ── contact form ────────────────────────────────────────────────────
-     The enquiry is posted through FormSubmit straight to the company
-     inbox — no account and no key; the first message sends a one-time
-     confirmation link to that inbox, and every message after it is
-     delivered. Set DIRECT to false to fall back to composing the enquiry
-     in the visitor's mail client instead.
+     With a Web3Forms access key the enquiry is posted straight to the
+     company inbox. Without one the form falls back to composing it in the
+     visitor's mail client. The key is not a secret: it only tells
+     Web3Forms which inbox to deliver to, and it is meant to sit in the
+     page.
      ──────────────────────────────────────────────────────────────────── */
 
   var TARGET_MAIL = 'info@rheinlanddigitalwerk.de';
-  var DIRECT = true;
-  var FORM_URL = 'https://formsubmit.co/ajax/' + TARGET_MAIL;
+  var FORM_KEY = '';
+  var FORM_URL = 'https://api.web3forms.com/submit';
 
   /* sent directly, the confirmation says so rather than pointing at a
      mail programme */
-  if (DIRECT) {
+  if (FORM_KEY) {
     var doneT = document.getElementById('doneTitle');
     var doneB = document.getElementById('doneBody');
     if (doneT) doneT.setAttribute('data-i18n', 'mch.sentTitle');
@@ -878,7 +878,7 @@
         'Phone:    ' + g('phone') + '\n' +
         'Topic:    ' + g('topic') + '\n\n' + g('message') + '\n';
 
-      if (!DIRECT) {
+      if (!FORM_KEY) {
         window.location.href = 'mailto:' + TARGET_MAIL +
           '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 
@@ -895,20 +895,20 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
-          _subject: subject,
-          _template: 'table',
-          _captcha: 'false',
-          _replyto: g('email'),
-          _honey: d.get('botcheck') ? 'bot' : '',
-          Name: g('name'),
-          'E-Mail': g('email'),
-          Unternehmen: g('company'),
-          Telefon: g('phone'),
-          Thema: (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '—',
-          Nachricht: g('message')
+          access_key: FORM_KEY,
+          subject: subject,
+          from_name: 'Website Rheinland Digitalwerk',
+          name: g('name'),
+          email: g('email'),
+          replyto: g('email'),
+          company: g('company'),
+          phone: g('phone'),
+          topic: (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '—',
+          message: g('message'),
+          botcheck: d.get('botcheck') ? true : ''
         })
       }).then(function (r) {
-        return r.json().then(function (j) { return r.ok && j && String(j.success) === 'true'; });
+        return r.json().then(function (j) { return r.ok && j && j.success; });
       }).then(function (ok) {
         if (!ok) throw new Error('rejected');
         if (status) { status.textContent = ''; status.className = 'form-status'; }
