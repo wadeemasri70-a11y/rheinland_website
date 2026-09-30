@@ -891,46 +891,70 @@
       if (btn) btn.disabled = true;
       if (status) { status.textContent = dict['ct.sending'] || ''; status.className = 'form-status'; }
 
-      /* Sent as form data, not JSON. A JSON body makes the browser ask
-         the service for permission first (a CORS preflight), which it does
-         not answer — so every enquiry failed before it was ever sent. Form
-         data needs no such round trip. */
-      var out = new FormData();
-      out.append('access_key', FORM_KEY);
-      out.append('subject', subject);
-      /* the enquiry shows up in the inbox under the visitor's own name,
-         and Reply goes straight back to their address */
-      out.append('from_name', g('name') || 'Website Rheinland Digitalwerk');
-      out.append('name', g('name'));
-      out.append('email', g('email'));
-      out.append('replyto', g('email'));
-      out.append('company', g('company'));
-      out.append('phone', g('phone'));
-      out.append('topic', (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '—');
-      out.append('message', g('message'));
+      /* Posted the way a browser posts any form: into a hidden frame.
+         fetch() could not be used — the service answers without the CORS
+         header, so the browser blocked every enquiry before it was sent.
+         A form post has no such restriction. On success the service sends
+         the frame on to danke.html on this site, which the page can read;
+         anything else means the enquiry did not go through. */
+      var fields = {
+        access_key: FORM_KEY,
+        subject: subject,
+        /* the enquiry shows up in the inbox under the visitor's own name,
+           and Reply goes straight back to their address */
+        from_name: g('name') || 'Website Rheinland Digitalwerk',
+        name: g('name'),
+        email: g('email'),
+        replyto: g('email'),
+        company: g('company'),
+        phone: g('phone'),
+        topic: (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '\u2014',
+        message: g('message'),
+        redirect: location.origin + location.pathname.replace(/[^/]*$/, '') + 'danke.html'
+      };
       // only a bot ticks the hidden box; people send no botcheck at all
-      if (d.get('botcheck')) out.append('botcheck', 'true');
+      if (d.get('botcheck')) fields.botcheck = 'true';
 
-      fetch(FORM_URL, {
-        method: 'POST',
-        body: out
-      }).then(function (r) {
-        return r.json().then(function (j) {
-          var ok = r.ok && j && j.success;
-          if (!ok && window.console) console.warn('Kontaktformular:', r.status, j && j.message);
-          return ok;
-        });
-      }).then(function (ok) {
-        if (!ok) throw new Error('rejected');
-        if (status) { status.textContent = ''; status.className = 'form-status'; }
-        if (window.RDW_MACHINE) window.RDW_MACHINE.done();
-      }).catch(function (err) {
-        if (window.console) console.warn('Kontaktformular:', err && err.message);
-        var dd = (window.I18N || {})[lang] || {};
-        if (status) { status.textContent = dd['ct.sendFail'] || ''; status.className = 'form-status err'; }
-      }).then(function () {
-        if (btn) btn.disabled = false;
+      var sink = document.getElementById('formSink');
+      var post = document.createElement('form');
+      post.method = 'POST';
+      post.action = FORM_URL;
+      post.target = 'formSink';
+      post.style.display = 'none';
+      Object.keys(fields).forEach(function (k) {
+        var i = document.createElement('input');
+        i.type = 'hidden'; i.name = k; i.value = fields[k];
+        post.appendChild(i);
       });
+      document.body.appendChild(post);
+
+      var settled = false;
+      function finish(ok) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        sink.onload = null;
+        if (btn) btn.disabled = false;
+        if (ok) {
+          if (status) { status.textContent = ''; status.className = 'form-status'; }
+          if (window.RDW_MACHINE) window.RDW_MACHINE.done();
+        } else {
+          var dd = (window.I18N || {})[lang] || {};
+          if (status) { status.textContent = dd['ct.sendFail'] || ''; status.className = 'form-status err'; }
+        }
+      }
+      var timer = setTimeout(function () { finish(false); }, 20000);
+
+      sink.onload = function () {
+        var ok = false;
+        try { ok = sink.contentWindow.location.href.indexOf('danke.html') > -1; }
+        catch (err) { ok = false; }          // still on the service: it refused
+        if (!ok && window.console) console.warn('Kontaktformular: keine Bestätigung erhalten');
+        finish(ok);
+      };
+
+      post.submit();
+      setTimeout(function () { if (post.parentNode) post.parentNode.removeChild(post); }, 200);
     });
   }
 
