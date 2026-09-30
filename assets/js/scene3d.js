@@ -1049,22 +1049,80 @@
     }
   }
 
+  function paintFace(ctx, it) {
+    var p = it.pts;
+    ctx.beginPath();
+    ctx.moveTo(p[0], p[1]);
+    ctx.lineTo(p[2], p[3]);
+    ctx.lineTo(p[4], p[5]);
+    ctx.lineTo(p[6], p[7]);
+    ctx.closePath();
+    ctx.fillStyle = it.fill;
+    ctx.strokeStyle = it.fill;
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  /* ── the room, painted once ──────────────────────────────────────────
+     The wall and the desk never move, and the painter's sort always puts
+     them first (layers 0 and 1), so every frame used to repaint the same
+     backdrop: a background gradient, two light pools, a shadow and four
+     hundred faces, most of them large. That was the bulk of the canvas
+     work, and it is what kept the fans busy. It is now painted into an
+     offscreen canvas and copied in with a single drawImage; it is redrawn
+     only when something it depends on changes — theme, size, camera, or
+     the power level while the lights come up.
+
+     The robot's contact shadow used to go down here too, but the room is
+     opaque and painted over it, so it never showed; it is not drawn.
+
+     The room's faces are outlined with whatever line width and cap the
+     cable pass left on the context (about 1.5px before the plug goes in,
+     0.74px once the lead is lit). That was never deliberate, but it is
+     part of how the room has always looked, so the cache copies it. */
+
+  var roomCanvas = null, roomKey = '';
+
+  function roomLayer(w, h, pwr, lw, cap) {
+    var key = lw + cap + '|' + theme + '|' + renderer.canvas.width + 'x' + renderer.canvas.height + '|' +
+              renderer.dpr + '|' + cam.eye.join(',') + '|' + cam.at.join(',') + '|' +
+              cam.fov + '|' + cam.shiftX + '|' + cam.shiftY + '|' + pwr;
+    if (roomCanvas && key === roomKey) return roomCanvas;
+    if (!roomCanvas) roomCanvas = document.createElement('canvas');
+    roomCanvas.width = renderer.canvas.width;
+    roomCanvas.height = renderer.canvas.height;
+    var c = roomCanvas.getContext('2d');
+    c.setTransform(renderer.dpr, 0, 0, renderer.dpr, 0, 0);
+
+    paintBackground(c, w, h);
+    wallPool(c, pwr);
+    deskPool(c, pwr);
+    c.save();
+    contactShadow(c, [LAPTOP.x, 0, LAPTOP.z], 26, 1);
+    c.restore();
+
+    c.lineWidth = lw;
+    c.lineCap = cap;
+    drawList.length = 0;
+    _poolN = 0;
+    collect(room);
+    drawList.sort(byDepth);
+    for (var i = 0; i < drawList.length; i++) paintFace(c, drawList[i]);
+
+    roomKey = key;
+    return roomCanvas;
+  }
+
   function renderFrame(state) {
     var ctx = renderer.ctx, w = renderer.w, h = renderer.h;
 
     world.updateWorld(null);
 
-    paintBackground(ctx, w, h);
     var pwr = state ? (state.cableLit || 0) : 1;
-    wallPool(ctx, pwr);
-    deskPool(ctx, pwr);
-
-    // shadows go down before the geometry so they sit under everything
+    var bg = roomLayer(w, h, pwr, ctx.lineWidth, ctx.lineCap);
     ctx.save();
-    contactShadow(ctx, [LAPTOP.x, 0, LAPTOP.z], 26, 1);
-    var rp = rig.root.world.t;
-    contactShadow(ctx, [rp[0], 0, rp[2]],
-      7.5 * ((state && state.shadowWide) || 1), state ? state.shadow : 1);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(bg, 0, 0);
     ctx.restore();
 
     drawList.length = 0;
@@ -1087,7 +1145,9 @@
     var lk = state && state.litKey >= 0 ? KEYS[state.litKey] : null;
     if (lk) { for (var q = 0; q < lk.faces.length; q++) lk.faces[q].mat = MAT.keyLit; }
 
+    room.visible = false;                // already on the canvas
     collect(world);
+    room.visible = true;
     if (lk) { for (var q2 = 0; q2 < lk.faces.length; q2++) lk.faces[q2].mat = lk.mat; }
 
     pushCable(state || {});
@@ -1098,17 +1158,7 @@
       var it = drawList[i];
       if (it.special === 'cable') { drawCableSeg(ctx, it, state || {}); continue; }
       if (it.special === 'screen') { drawScreenContent(ctx, it, state || {}); continue; }
-      var p = it.pts;
-      ctx.beginPath();
-      ctx.moveTo(p[0], p[1]);
-      ctx.lineTo(p[2], p[3]);
-      ctx.lineTo(p[4], p[5]);
-      ctx.lineTo(p[6], p[7]);
-      ctx.closePath();
-      ctx.fillStyle = it.fill;
-      ctx.strokeStyle = it.fill;
-      ctx.fill();
-      ctx.stroke();
+      paintFace(ctx, it);
     }
 
     sparkPass(ctx, state || {});

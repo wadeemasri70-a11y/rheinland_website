@@ -150,6 +150,13 @@ Nachdem der Roboter umgekippt ist, steigt eine dünne Rauchfahne von ihm auf
 Weltraum auf und werden pro Bild projiziert — sie stehen also in der Szene
 und schweben nicht flach darüber.
 
+**Rechenlast:** Wand und Tisch bewegen sich nie und werden vom Sortieren
+immer zuerst gezeichnet. Sie werden deshalb einmal in eine unsichtbare
+Leinwand gemalt (`roomLayer()` in `scene3d.js`) und pro Bild nur noch mit
+einem `drawImage` hineinkopiert. Neu gemalt wird nur, wenn sich Theme,
+Größe, Kamera oder die Helligkeit beim Einschalten ändert. Das spart gut ein
+Drittel der Arbeit pro Bild, und das Bild bleibt pixelgenau gleich.
+
 Bei `prefers-reduced-motion: reduce` wird statt der Animation das fertige,
 beleuchtete Schlussbild gezeigt. Läuft die Szene aus dem Sichtfeld, pausiert
 die Schleife.
