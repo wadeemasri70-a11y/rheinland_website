@@ -150,6 +150,12 @@ Nachdem der Roboter umgekippt ist, steigt eine dünne Rauchfahne von ihm auf
 Weltraum auf und werden pro Bild projiziert — sie stehen also in der Szene
 und schweben nicht flach darüber.
 
+**Neue Version ausliefern:** GitHub Pages lässt Browser Dateien bis zu
+zehn Minuten zwischenspeichern. Die CSS- und JS-Links tragen deshalb eine
+Versionsnummer (`?v=…`) in `index.html`, `impressum.html` und
+`datenschutz.html`; bei jeder Änderung an CSS oder JS diese Nummer
+erhöhen, dann laden Besucher sofort die neue Fassung.
+
 **Rechenlast:** Wand und Tisch bewegen sich nie und werden vom Sortieren
 immer zuerst gezeichnet. Sie werden deshalb einmal in eine unsichtbare
 Leinwand gemalt (`roomLayer()` in `scene3d.js`) und pro Bild nur noch mit
