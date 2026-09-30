@@ -123,6 +123,73 @@
     return out;
   }
 
+  /* A box with rounded edges and corners, centred at c with size s.
+
+     Built as a subdivided cube whose vertices are pulled onto the rounded
+     surface: each point is clamped into the inner box (the box shrunk by
+     the radius on every side), and the offset left over is resized to the
+     radius. Points in the middle of a face are unchanged; points in the
+     band along an edge land on a quarter-circle, spaced by tan() so the
+     facets are even in angle. Winding and per-side material keys match
+     box(). */
+  function rbox(c, s, r, seg, mat, skip) {
+    var h = [s[0] / 2, s[1] / 2, s[2] / 2];
+    r = Math.max(0.001, Math.min(r, h[0], h[1], h[2]));
+    seg = Math.max(1, seg | 0);
+    var sk = skip || {};
+
+    function samples(hh) {
+      var inner = hh - r, out = [-hh], k;
+      for (k = seg - 1; k >= 1; k--) out.push(-inner - r * Math.tan(k / seg * Math.PI / 4));
+      out.push(-inner);
+      if (inner > 1e-6) out.push(inner);
+      for (k = 1; k < seg; k++) out.push(inner + r * Math.tan(k / seg * Math.PI / 4));
+      out.push(hh);
+      return out;
+    }
+    var S = [samples(h[0]), samples(h[1]), samples(h[2])];
+
+    function round(p) {
+      var q = [0, 0, 0], d = [0, 0, 0], len = 0, i;
+      for (i = 0; i < 3; i++) {
+        var lim = h[i] - r;
+        q[i] = p[i] > lim ? lim : p[i] < -lim ? -lim : p[i];
+        d[i] = p[i] - q[i];
+        len += d[i] * d[i];
+      }
+      len = Math.sqrt(len) || 1;
+      return [c[0] + q[0] + d[0] / len * r, c[1] + q[1] + d[1] / len * r, c[2] + q[2] + d[2] / len * r];
+    }
+
+    /* one side: axis `n` fixed at sign*h, `u` and `v` swept so that
+       cross(u, v) points outward */
+    function side(n, sign, u, du, v, dv, m) {
+      var out = [], su = S[u].slice(), sv = S[v].slice();
+      if (du < 0) su.reverse();
+      if (dv < 0) sv.reverse();
+      for (var i = 0; i < su.length - 1; i++) {
+        for (var j = 0; j < sv.length - 1; j++) {
+          var P = function (a, b) {
+            var p = [0, 0, 0];
+            p[n] = sign * h[n]; p[u] = a; p[v] = b;
+            return round(p);
+          };
+          out.push(face([P(su[i], sv[j]), P(su[i + 1], sv[j]), P(su[i + 1], sv[j + 1]), P(su[i], sv[j + 1])], m));
+        }
+      }
+      return out;
+    }
+
+    var out = [];
+    if (!sk.front)  out = out.concat(side(2,  1, 0,  1, 1,  1, mat.front || mat));
+    if (!sk.back)   out = out.concat(side(2, -1, 0, -1, 1,  1, mat.back || mat));
+    if (!sk.right)  out = out.concat(side(0,  1, 2, -1, 1,  1, mat.right || mat));
+    if (!sk.left)   out = out.concat(side(0, -1, 2,  1, 1,  1, mat.left || mat));
+    if (!sk.top)    out = out.concat(side(1,  1, 0,  1, 2, -1, mat.top || mat));
+    if (!sk.bottom) out = out.concat(side(1, -1, 0,  1, 2,  1, mat.bottom || mat));
+    return out;
+  }
+
   /* A single quad, given as four points. */
   function quad(a, b, c, d, mat) { return [face([a, b, c, d], mat)]; }
 
@@ -208,7 +275,7 @@
     v3: v3, add: add, sub: sub, scale: scale, dot: dot, cross: cross, norm: norm,
     rotX: rotX, rotY: rotY, rotZ: rotZ, trans: trans, scaleU: scaleU, compose: compose, xform: xform,
     applyR: applyR, IDENT: IDENT,
-    Node: Node, box: box, quad: quad, grid: grid, face: face, faceNormal: faceNormal,
+    Node: Node, box: box, rbox: rbox, quad: quad, grid: grid, face: face, faceNormal: faceNormal,
     Camera: Camera, Renderer: Renderer
   };
 }(window));

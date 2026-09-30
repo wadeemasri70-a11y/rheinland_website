@@ -171,6 +171,13 @@
     var hopIndex = -1, hopP = 0, onKeys = false, hopArc = 0;
     var lift = 0, lean = 0, roll = 0, tip = 0;
 
+    /* How far the robot and the laptop have evolved, 0..1. It starts as
+       the robot lands on the keyboard and completes over the first hops;
+       the scene rebuilds both from it, and the robot also grows a little
+       into its new shape. */
+    var evolve = clamp01((t - T.hopFrom + 900) / 2200);
+    var KEY_SCALE = 0.52 * (1 + 0.12 * evolve);
+
     /* ---- where is the robot ---- */
     if (t < T.turn) {
       x = track([
@@ -212,7 +219,7 @@
     } else {
       onKeys = true;
       face = Math.PI * 2 + 0.55;
-      scale = 0.52;
+      scale = KEY_SCALE;
       var kFirst = keyWorld(KEYS[HOP_KEYS[0]]);
 
       if (t < T.hopFrom) {
@@ -297,7 +304,7 @@
       x = lerp(S.LAPTOP.x - 22, k0[0], Ease.inOut(cp));
       z = lerp(6, k0[2], Ease.inOut(cp));
       ground = lerp(0, k0[1], Ease.soft(cp));
-      scale = lerp(1, 0.52, Ease.soft(cp));
+      scale = lerp(1, KEY_SCALE, Ease.soft(cp));
       lift = Math.sin(cp * Math.PI) * 5.5;
       lean = 12 * Math.sin(cp * Math.PI);
       face = Math.PI * 2 + 0.55 * cp;
@@ -494,7 +501,7 @@
 
     /* the chassis modernises slightly ahead of the lighting, so the shape
        changes first and the backlight arrives as the finishing touch */
-    st.modern = clamp01((t - T.hopFrom + 900) / 2200);
+    st.modern = evolve;
     st.rgb = clamp01((t - T.hopFrom + 200) / 2900) * (t > T.fadeTo - 900 ? clamp01((T.fadeTo - t) / 900) : 1);
     st.rgbT = t;
 

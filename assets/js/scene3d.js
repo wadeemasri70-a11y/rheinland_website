@@ -287,49 +287,45 @@
 
   /* Proportions are deliberately toy-like — a big head with a wrap-around
      visor band, a small body. The band glows on the front and both sides,
-     so the face still reads when the robot is seen in profile. */
+     so the face still reads when the robot is seen in profile.
+
+     The robot evolves along with the laptop. Once it is on the keyboard
+     writing code, the same `modern` value that slims the laptop down and
+     brings up its backlight also rebuilds the robot: every edge rounds
+     off, the dark navy shell turns a light silver, the glowing band turns
+     into dark glass with the eyes lit on it. At 0 it is exactly the boxy
+     robot it always was — the change only starts on the keyboard. */
+
+  // the robot's own materials, so recolouring it never touches anything
+  // that shares a colour with it (the plug's pins use the same dark)
+  function copy(mat) { return M(mat.n.slice(), mat.d.slice(), mat.emis ? { emis: 1 } : { lit: 1 }); }
+  var RM = { shell: copy(MAT.shell), shellDk: copy(MAT.shellDk), joint: copy(MAT.joint),
+             visor: copy(MAT.visor), eye: copy(MAT.eye) };
+
+  // where each colour ends up, night and day
+  var ROBOT_MODERN = {
+    shell:   { n: [132, 142, 154], d: [236, 239, 244] },   // light silver
+    shellDk: { n: [80, 90, 104],   d: [192, 201, 214] },
+    joint:   { n: [24, 32, 48],    d: [70, 82, 102] },     // dark rubber
+    visor:   { n: [10, 18, 32],    d: [20, 32, 52] },      // dark glass
+    eye:     { n: [130, 240, 252], d: [40, 214, 232] }
+  };
 
   var body = robot.add(new E.Node('body'));  rig.body = body;
   body.setTRS([E.trans(0, 4.4, 0)]);
-  body.faces = []
-    .concat(E.box([0, 3.2, 0], [5.6, 6.4, 7.6], MAT.shell))
-    .concat(E.box([2.5, 3.3, 0], [1.0, 3.6, 4.6], MAT.shellDk))
-    .concat(E.box([3.05, 3.3, 0], [0.3, 1.5, 1.5], MAT.core))
-    .concat(E.box([0, 6.8, 0], [3.0, 1.4, 3.6], MAT.joint));     // neck
-
   var head = body.add(new E.Node('head')); rig.head = head;
   head.setTRS([E.trans(0, 7.5, 0)]);
-  head.faces = []
-    .concat(E.box([0, 3.6, 0], [7.4, 7.4, 8.2], MAT.shell))
-    // visor band: proud of the shell, emissive on front and both sides
-    .concat(E.box([0.15, 3.9, 0], [7.6, 3.0, 8.4], {
-      front: MAT.visor, left: MAT.visor, right: MAT.visor,
-      top: MAT.shellDk, bottom: MAT.shellDk, back: MAT.shellDk }))
-    // ear pods
-    .concat(E.box([-0.8, 3.5, 4.5], [2.8, 2.8, 1.0], MAT.joint))
-    .concat(E.box([-0.8, 3.5, -4.5], [2.8, 2.8, 1.0], MAT.joint));
 
   /* antenna on its own node: it lags behind the head and springs back,
      which does more for the sense of weight than any amount of easing */
   rig.ant = head.add(new E.Node('ant'));
   rig.ant.setTRS([E.trans(-2.2, 7.2, 0)]);
-  rig.ant.faces = []
-    .concat(E.box([0, 1.2, 0], [0.45, 2.4, 0.45], MAT.joint))
-    .concat(E.box([0, 2.7, 0], [1.0, 1.0, 1.0], MAT.core));
 
-
-  /* the two eyes sit slightly proud of the band so they read brighter */
   rig.eyes = head.add(new E.Node('eyes'));
-  rig.eyes.faces = []
-    .concat(E.quad([3.95, 3.0, 3.0], [3.95, 3.0, 1.0], [3.95, 4.8, 1.0], [3.95, 4.8, 3.0], MAT.eye))
-    .concat(E.quad([3.95, 3.0, -1.0], [3.95, 3.0, -3.0], [3.95, 4.8, -3.0], [3.95, 4.8, -1.0], MAT.eye));
 
   function makeArm(side) {
     var n = body.add(new E.Node('arm' + side));
     n.setTRS([E.trans(0, 5.6, 4.3 * side)]);
-    n.faces = []
-      .concat(E.box([0, -2.1, 0], [2.1, 4.4, 2.1], MAT.shellDk))
-      .concat(E.box([0, -4.7, 0], [1.9, 1.9, 1.9], MAT.joint));
     return n;
   }
   rig.armF = makeArm(1);
@@ -338,13 +334,80 @@
   function makeLeg(side) {
     var n = robot.add(new E.Node('leg' + side));
     n.setTRS([E.trans(0, 4.4, 2.1 * side)]);
-    n.faces = []
-      .concat(E.box([0, -1.7, 0], [2.5, 3.6, 2.7], MAT.shellDk))
-      .concat(E.box([0.4, -3.8, 0], [4.2, 1.6, 3.1], MAT.joint));
     return n;
   }
   rig.legF = makeLeg(1);
   rig.legB = makeLeg(-1);
+
+  /* Closed shapes: faces turned away from the camera are skipped. The
+     rounded parts have many more faces than the boxes, and this halves
+     what the painter has to sort. */
+  [body, head, rig.ant, rig.eyes, rig.armF, rig.armB, rig.legF, rig.legB]
+    .forEach(function (n) { n.cull = true; });
+
+  var robotM = -1;
+
+  function buildRobot(m) {
+    if (Math.abs(m - robotM) < 0.012) return;
+    robotM = m;
+
+    // the original box until the change starts, then a box rounding off
+    function part(c, s, r, seg, mat) {
+      return m < 0.02 ? E.box(c, s, mat) : E.rbox(c, s, r * m, seg, mat);
+    }
+
+    body.faces = []
+      .concat(part([0, 3.2, 0], [5.6, 6.4, 7.6], 1.7, 2, RM.shell))
+      .concat(part([2.5, 3.3, 0], [1.0, 3.6, 4.6], 0.45, 1, RM.shellDk))
+      .concat(part([3.05, 3.3, 0], [0.3, 1.5, 1.5], 0.14, 1, MAT.core))
+      .concat(part([0, 6.8, 0], [3.0, 1.4, 3.6], 0.6, 1, RM.joint));        // neck
+
+    head.faces = []
+      .concat(part([0, 3.6, 0], [7.4, 7.4, 8.2], 2.1, 2, RM.shell))
+      // visor band: proud of the shell, glowing on front and both sides
+      .concat(part([0.15, 3.9, 0], [7.6, 3.0, 8.4], 0.9, 2, {
+        front: RM.visor, left: RM.visor, right: RM.visor,
+        top: RM.shellDk, bottom: RM.shellDk, back: RM.shellDk }))
+      // ear pods
+      .concat(part([-0.8, 3.5, 4.5], [2.8, 2.8, 1.0], 0.48, 1, RM.joint))
+      .concat(part([-0.8, 3.5, -4.5], [2.8, 2.8, 1.0], 0.48, 1, RM.joint));
+
+    rig.ant.faces = []
+      .concat(E.box([0, 1.2, 0], [0.45, 2.4, 0.45], RM.joint))
+      .concat(part([0, 2.7, 0], [1.0, 1.0, 1.0], 0.5, 1, MAT.core));
+
+    /* the two eyes sit slightly proud of the band so they read brighter;
+       modern, they narrow into tall bars on the dark glass */
+    var ex = 3.95 + 0.03 * m;
+    var ew = lerp(2.0, 1.15, m), eh = lerp(1.8, 1.95, m), ez = lerp(2.0, 1.6, m), ey = 3.9;
+    rig.eyes.faces = []
+      .concat(E.quad([ex, ey - eh / 2, ez + ew / 2], [ex, ey - eh / 2, ez - ew / 2],
+                     [ex, ey + eh / 2, ez - ew / 2], [ex, ey + eh / 2, ez + ew / 2], RM.eye))
+      .concat(E.quad([ex, ey - eh / 2, -ez + ew / 2], [ex, ey - eh / 2, -ez - ew / 2],
+                     [ex, ey + eh / 2, -ez - ew / 2], [ex, ey + eh / 2, -ez + ew / 2], RM.eye));
+
+    [rig.armF, rig.armB].forEach(function (n) {
+      n.faces = []
+        .concat(part([0, -2.1, 0], [2.1, 4.4, 2.1], 0.95, 2, RM.shellDk))
+        .concat(part([0, -4.7, 0], [1.9, 1.9, 1.9], 0.85, 1, RM.joint));
+    });
+    [rig.legF, rig.legB].forEach(function (n) {
+      n.faces = []
+        .concat(part([0, -1.7, 0], [2.5, 3.6, 2.7], 1.0, 2, RM.shellDk))
+        .concat(part([0.4, -3.8, 0], [4.2, 1.6, 3.1], 0.6, 1, RM.joint));
+    });
+
+    // colours, old → modern
+    for (var k in RM) {
+      var from = MAT[k], to = ROBOT_MODERN[k], mat = RM[k];
+      for (var ci = 0; ci < 3; ci++) {
+        mat.n[ci] = from.n[ci] + (to.n[ci] - from.n[ci]) * m;
+        mat.d[ci] = from.d[ci] + (to.d[ci] - from.d[ci]) * m;
+      }
+    }
+  }
+
+  buildRobot(0);
 
   /* the plug the robot carries */
   var plug = world.add(new E.Node('plug'));
@@ -368,6 +431,11 @@
   function grab() {
     var o = _pool[_poolN];
     if (!o) { o = _pool[_poolN] = { pts: [], n: 0, depth: 0, mat: null, cx: 0, cy: 0, fill: '' }; }
+    /* Pooled items are reused in whatever order they come up, and the face
+       count changes from frame to frame (culling, the robot rebuilding) —
+       a slot that was a cable segment last frame can be a face this one.
+       Clear the tag, or it gets drawn as cable. */
+    o.special = null;
     _poolN++;
     return o;
   }
@@ -444,17 +512,27 @@
   function collect(node) {
     if (!node.visible) return;
     var m = node.world, f = node.faces, i, j;
+    var wv = [0, 0, 0, 0];
     for (i = 0; i < f.length; i++) {
       var fc = f[i];
+      /* The world matrix carries the robot's scale, so the rotated normal is
+         not unit length. Normalised, the lighting no longer dims as the
+         robot is scaled down onto the keyboard. */
+      var wn = E.norm(E.applyR(m.r, fc.n));
+      var wx = 0, wy = 0, wz = 0;
+      for (j = 0; j < 4; j++) {
+        wv[j] = E.xform(m, fc.v[j]);
+        wx += wv[j][0]; wy += wv[j][1]; wz += wv[j][2];
+      }
+      var centroid = [wx / 4, wy / 4, wz / 4];
+      if (node.cull && wn[0] * (cam.eye[0] - centroid[0]) + wn[1] * (cam.eye[1] - centroid[1]) +
+                       wn[2] * (cam.eye[2] - centroid[2]) < 0) continue;   // turned away
+
       var item = grab();
       var pts = item.pts;
       var ok = true, depth = 0;
-      var wx = 0, wy = 0, wz = 0;
       for (j = 0; j < 4; j++) {
-        var wp = E.xform(m, fc.v[j]);
-        wx += wp[0]; wy += wp[1]; wz += wp[2];
-        var vp = cam.toView(wp);
-        var sp = renderer.projectView(vp, cam);
+        var sp = renderer.projectView(cam.toView(wv[j]), cam);
         if (!sp) { ok = false; break; }
         pts[j * 2] = sp.x; pts[j * 2 + 1] = sp.y;
         depth += sp.z;
@@ -462,11 +540,10 @@
       if (!ok) { _poolN--; continue; }
       item.depth = depth / 4;
       item.mat = fc.mat;
-      var centroid = [wx / 4, wy / 4, wz / 4];
       item.cx = (pts[0] + pts[2] + pts[4] + pts[6]) / 4;
       item.cy = (pts[1] + pts[3] + pts[5] + pts[7]) / 4;
       item.layer = fc.mat.layer === undefined ? 2 : fc.mat.layer;
-      item.fill = shade(fc.mat, E.applyR(m.r, fc.n), centroid, item.depth);
+      item.fill = shade(fc.mat, wn, centroid, item.depth);
       drawList.push(item);
     }
     for (i = 0; i < node.children.length; i++) collect(node.children[i]);
@@ -589,34 +666,71 @@
   }
 
   /* ── cable ─────────────────────────────────────────────────────────
-     A sagging run from the plug to the side of the laptop. Sampled in 3D
-     and pushed as individual segments so it sorts against the scene
-     instead of being painted flatly on top. */
+     The lead drops from the plug toward the wall, follows the wall back
+     and the back edge across, and goes into a port on the rear of the
+     laptop.
 
-  var CABLE_N = 26;
+     It used to sag forward in a loop and go into the side of the laptop
+     facing the wall — straight across where the robot walks, stands and
+     runs, so its legs went through it. Along the wall and the back it
+     stays behind everything the robot does, and the connection is on the
+     far side of the laptop from it.
+
+     The route is a handful of corner points rounded off by corner-cutting
+     (Chaikin), which never overshoots the way a spline through the points
+     can, then resampled into short even pieces so each sorts on its own. */
+
+  var PORT_L = [-11.62, 0.75, 9.0];        // laptop-local: rear edge, left of centre
+  var CABLE_STEP = 1.4;
   var cablePts = [];
 
-  function bez(p0, p1, p2, p3, t) {
-    var u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
-    return [a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0],
-            a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1],
-            a * p0[2] + b * p1[2] + c * p2[2] + d * p3[2]];
+  function lerp3(a, b, t) {
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   }
 
   function buildCable(st) {
-    var from = st.plugWorld || [SOCKET[0] + 3.4, SOCKET[1], SOCKET[2]];
-    var to = E.xform(laptop.world, [-3, 0.9, 16.8]);
-    var p0 = [from[0] + 1.4, from[1] - 1.8, from[2]];
-    var p1 = [from[0] + 6, from[1] * 0.25, from[2] + 10];
-    var p2 = [to[0] - 6, 0.8, to[2] + 26];
-    var p3 = to;
+    var from = (st && st.plugWorld) || [SOCKET[0] + 3.4, SOCKET[1], SOCKET[2]];
+    var exit = [from[0] + 1.4, from[1] - 1.8, from[2]];            // underside of the plug
+    var port = E.xform(laptop.world, PORT_L);
+    var back = E.norm(E.applyR(laptop.world.r, [-1, 0, 0]));
+    var FLOOR = 0.45, WALL = 2.2;
+
+    var pts = [
+      exit,
+      [exit[0] - 1.0, Math.max(FLOOR, exit[1] - 2.2), exit[2]],      // falls, toward the wall
+      [WALL, FLOOR, exit[2] - 1.5],                                  // lands at the wall
+      [WALL, FLOOR, -40],                                            // runs back along it
+      [port[0] - 4, FLOOR, -41],                                     // across the back
+      [port[0] + back[0] * 5, FLOOR, port[2] + back[2] * 5],         // lines up with the port
+      port
+    ];
+    for (var it = 0; it < 3; it++) {
+      var nx = [pts[0]];
+      for (var i = 0; i < pts.length - 1; i++) {
+        nx.push(lerp3(pts[i], pts[i + 1], 0.25), lerp3(pts[i], pts[i + 1], 0.75));
+      }
+      nx.push(pts[pts.length - 1]);
+      pts = nx;
+    }
+
     cablePts.length = 0;
-    for (var i = 0; i <= CABLE_N; i++) cablePts.push(bez(p0, p1, p2, p3, i / CABLE_N));
+    cablePts.push(pts[0]);
+    var carry = 0;
+    for (var k = 0; k < pts.length - 1; k++) {
+      var a = pts[k], b = pts[k + 1];
+      var len = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+      var d = CABLE_STEP - carry;
+      while (d <= len) { cablePts.push(lerp3(a, b, d / len)); d += CABLE_STEP; }
+      carry = len - (d - CABLE_STEP);
+    }
+    cablePts.push(pts[pts.length - 1]);
+    return cablePts;
   }
 
   function pushCable(st) {
     buildCable(st);
-    for (var i = 0; i < CABLE_N; i++) {
+    var n = cablePts.length - 1;
+    for (var i = 0; i < n; i++) {
       var a = proj(cablePts[i]), b = proj(cablePts[i + 1]);
       if (!a || !b) continue;
       var it = grab();
@@ -624,7 +738,7 @@
       it.layer = 2;
       it.depth = (a.z + b.z) / 2;
       it.ax = a.x; it.ay = a.y; it.bx = b.x; it.by = b.y;
-      it.t0 = i / CABLE_N; it.t1 = (i + 1) / CABLE_N;
+      it.t0 = i / n; it.t1 = (i + 1) / n;
       it.w = Math.max(1.4, 190 / it.depth);
       drawList.push(it);
     }
@@ -963,7 +1077,10 @@
       MAT.screen.d[ci] = SCREEN_ON.d[ci] + (SCREEN_OFF.d[ci] - SCREEN_ON.d[ci]) * (1 - sp);
     }
 
-    buildShell(state && state.modern !== undefined ? state.modern : 1);
+    // the laptop and the robot evolve together, off the same value
+    var modern = state && state.modern !== undefined ? state.modern : 1;
+    buildShell(modern);
+    buildRobot(modern);
     backlight(state);
 
     // light the key the robot just landed on
@@ -1058,6 +1175,7 @@
 
   window.RDW_SCENE = {
     rig: rig, cam: cam, world: world, KEYS: KEYS, laptop: laptop, lid: lid,
+    cablePoints: function () { return buildCable({ plugWorld: window.RDW_SCENE.plugWorld }); },
     plug: plug, socket: socket, SOCKET: SOCKET, LAPTOP: LAPTOP,
     SCREEN_QUAD: SCREEN_QUAD, SCR_W: SCR_W, SCR_H: SCR_H,
     renderer: renderer, renderFrame: renderFrame, proj: proj, glowAt: glowAt,

@@ -95,6 +95,33 @@ erweitert:
   und lässt die Tasten unangetastet — der Roboter zielt beim Springen auf
   sie, sie dürfen sich also nicht bewegen. Aus demselben Grund bleibt die
   Höhe des Unterteils fest.
+- **Der Roboter entwickelt sich mit.** Derselbe Wert `st.modern`, der den
+  Laptop umbaut, baut in `buildRobot()` auch den Roboter neu: Alle Kanten
+  runden sich ab (`E.rbox()` in `engine3d.js`, eine Box mit abgerundeten
+  Kanten), die dunkle Navy-Hülle wird hellsilbern, das leuchtende Visierband
+  wird dunkles Glas mit den Augen darauf, und er wächst dabei um gut ein
+  Zehntel. Bei 0 ist er Stück für Stück der kantige Roboter von vorher —
+  die Veränderung beginnt erst, wenn er auf der Tastatur landet. Der
+  Roboter hat dafür eigene Materialien (`RM`), die als Kopien der alten
+  Farben anfangen; so färbt sich nichts mit, das zufällig dieselbe Farbe
+  benutzt (die Stifte des Steckers haben dasselbe Dunkel wie seine Gelenke).
+  Die Endfarben stehen in `ROBOT_MODERN`.
+
+  Zwei Dinge gehören dazu: Die Körperteile sind als geschlossene Formen
+  markiert (`cull`), abgewandte Flächen werden übersprungen. Und die
+  Normalen werden normiert, bevor sie in die Beleuchtung gehen — die
+  Weltmatrix trägt die Skalierung des Roboters, und bisher wurde er auf der
+  Tastatur dadurch dunkler beleuchtet, als er ist.
+- **Das Kabel** läuft vom Stecker zur Wand hinunter, an der Wand entlang
+  nach hinten, an der Rückkante entlang und in eine Buchse an der Rückseite
+  des Laptops (`buildCable()` in `scene3d.js`). Vorher hing es in einer
+  Schlaufe nach vorn und ging in die Seite des Laptops, die zur Wand zeigt —
+  genau dort, wo der Roboter läuft, steht und losrennt; seine Beine gingen
+  hindurch. Nachgemessen über die ganze Schleife: vorher bis zu 0,4 cm
+  *im* Roboter, jetzt mindestens 3,8 cm Abstand. Die Ecken der Route werden
+  mit Chaikin-Eckenschnitt gerundet, der anders als ein Spline durch die
+  Punkte nicht überschwingt — ein Kabel auf dem Tisch taucht nicht unter
+  die Tischplatte.
 - **Die RGB-Beleuchtung** der Tastatur fährt kurz danach hoch (`st.rgb` in
   `anim3d.js`, `backlight()` und `rgbGlow()` in `scene3d.js`). Jede Taste hat ein eigenes Materialobjekt, dessen Farbe pro
   Bild gesetzt wird; eine Farbwelle läuft anhand der Position über das
