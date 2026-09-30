@@ -826,7 +826,7 @@
      a form endpoint once hosting is decided.
      ──────────────────────────────────────────────────────────────────── */
 
-  var TARGET_MAIL = 'info@rheinland-digitalwerk.de';
+  var TARGET_MAIL = 'info@rheinlanddigitalwerk.de';
   var form = document.getElementById('contactForm');
   var status = document.getElementById('formStatus');
 
