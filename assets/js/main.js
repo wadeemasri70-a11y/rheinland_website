@@ -894,7 +894,9 @@
       var payload = {
           access_key: FORM_KEY,
           subject: subject,
-          from_name: 'Website Rheinland Digitalwerk',
+          /* the enquiry shows up in the inbox under the visitor's own
+             name, and Reply goes straight back to their address */
+          from_name: g('name') || 'Website Rheinland Digitalwerk',
           name: g('name'),
           email: g('email'),
           replyto: g('email'),
