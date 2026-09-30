@@ -891,10 +891,7 @@
       if (btn) btn.disabled = true;
       if (status) { status.textContent = dict['ct.sending'] || ''; status.className = 'form-status'; }
 
-      fetch(FORM_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
+      var payload = {
           access_key: FORM_KEY,
           subject: subject,
           from_name: 'Website Rheinland Digitalwerk',
@@ -904,16 +901,27 @@
           company: g('company'),
           phone: g('phone'),
           topic: (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '—',
-          message: g('message'),
-          botcheck: d.get('botcheck') ? true : ''
-        })
+          message: g('message')
+      };
+      // only a bot ticks the hidden box; people send no botcheck at all
+      if (d.get('botcheck')) payload.botcheck = true;
+
+      fetch(FORM_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
       }).then(function (r) {
-        return r.json().then(function (j) { return r.ok && j && j.success; });
+        return r.json().then(function (j) {
+          var ok = r.ok && j && j.success;
+          if (!ok && window.console) console.warn('Kontaktformular:', r.status, j && j.message);
+          return ok;
+        });
       }).then(function (ok) {
         if (!ok) throw new Error('rejected');
         if (status) { status.textContent = ''; status.className = 'form-status'; }
         if (window.RDW_MACHINE) window.RDW_MACHINE.done();
-      }).catch(function () {
+      }).catch(function (err) {
+        if (window.console) console.warn('Kontaktformular:', err && err.message);
         var dd = (window.I18N || {})[lang] || {};
         if (status) { status.textContent = dd['ct.sendFail'] || ''; status.className = 'form-status err'; }
       }).then(function () {
