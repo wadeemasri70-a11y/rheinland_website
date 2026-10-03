@@ -958,6 +958,27 @@
     });
   }
 
+  /* ── map: loads only when asked for ─────────────────────────────────── */
+
+  (function officeMap() {
+    var btn = document.getElementById('mapLoad');
+    var stage = document.getElementById('mapStage');
+    if (!btn || !stage) return;
+    btn.addEventListener('click', function () {
+      var f = document.createElement('iframe');
+      f.title = 'Google Maps: Gnadentaler Allee 14, 41468 Neuss';
+      f.loading = 'lazy';
+      f.referrerPolicy = 'no-referrer-when-downgrade';
+      f.src = 'https://maps.google.com/maps?q=' +
+        encodeURIComponent('Gnadentaler Allee 14, 41468 Neuss') +
+        '&z=16&hl=' + (lang === 'en' ? 'en' : 'de') + '&output=embed';
+      stage.innerHTML = '';
+      stage.appendChild(f);
+      var card = document.getElementById('mapCard');
+      if (card) card.classList.add('is-loaded');
+    });
+  }());
+
   /* ── the little contact robot ────────────────────────────────────────
      It sits bottom-right and drifts with the scroll: every wheel turn
      gives it an impulse, a damped spring carries it there and back, and
