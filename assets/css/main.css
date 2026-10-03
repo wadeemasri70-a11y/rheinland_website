@@ -737,58 +737,164 @@ h4{ font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--
 .reveal{ opacity:0; transform:translateY(16px); transition:opacity .8s var(--ease), transform .8s var(--ease); }
 .reveal.is-in{ opacity:1; transform:none; }
 
-/* ── map of the office ───────────────────────────────────────────────────
-   A drawn stand-in until the visitor asks for the real map: German law
-   wants consent before anything loads from Google, and the drawing keeps
-   the card from looking like a hole while it waits. */
+/* ── where we are: map band above the contact section ───────────────────
+   A drawn, techy stand-in for a map, with a robot for a pin that notices
+   the pointer: its eyes follow it, it leans towards it, and when the
+   pointer reaches it, it hops and says hello. Google Maps replaces the
+   drawing only when asked for — German law wants consent first. */
 
-.map-card{
-  margin:clamp(22px,3vw,30px) 0 0; max-width:400px;
-  border:1px solid var(--line); border-radius:var(--r-lg);
-  background:var(--surface); overflow:hidden;
+.locmap{
+  --lm-bg:#0A1322; --lm-grid:rgba(95,233,245,.055); --lm-road:rgba(120,160,215,.20);
+  --lm-main:rgba(130,180,240,.34); --lm-block:rgba(100,135,190,.10); --lm-block-line:rgba(120,160,215,.16);
+  --lm-water:rgba(47,227,240,.14); --lm-route:#5FE9F5; --lm-label:rgba(95,233,245,.45);
+  --lm-corner:rgba(95,233,245,.55); --lm-radar:rgba(95,233,245,.16);
+  position:relative; display:grid; grid-template-columns:1fr minmax(280px, 340px);
+  min-height:380px; margin:0 0 clamp(56px,7vw,96px);
+  border:1px solid var(--line); border-radius:24px; overflow:hidden;
+  background:var(--lm-bg);
+  box-shadow:0 30px 80px -40px rgba(0,0,0,.6);
 }
-.map-stage{ position:relative; aspect-ratio:16/8; overflow:hidden; border-bottom:1px solid var(--line); }
-.map-card.is-loaded .map-stage{ aspect-ratio:16/11; }
-.map-art{ position:absolute; inset:0; width:100%; height:100%; }
-.ma-road { fill:none; stroke:var(--line-2); stroke-width:5; stroke-linecap:round; opacity:.55; }
-.ma-main { stroke-width:9; opacity:.8; }
-.ma-river{ fill:none; stroke:color-mix(in srgb, var(--accent) 38%, transparent); stroke-width:16; stroke-linecap:round; }
-.ma-block{ fill:var(--surface-2); stroke:var(--line); }
-
-.map-pin{
-  position:absolute; left:50%; top:46%; width:34px; height:34px; margin:-30px 0 0 -17px;
-  color:#E47A1E; filter:drop-shadow(0 4px 6px rgba(0,0,0,.28));
-  animation:mapPin 2.8s var(--ease) infinite;
+:root[data-theme="day"] .locmap{
+  --lm-bg:#EEF3F8; --lm-grid:rgba(14,116,144,.07); --lm-road:rgba(40,64,100,.14);
+  --lm-main:rgba(40,64,100,.26); --lm-block:rgba(30,58,138,.05); --lm-block-line:rgba(30,58,138,.10);
+  --lm-water:rgba(14,116,144,.14); --lm-route:#0E7490; --lm-label:rgba(14,116,144,.55);
+  --lm-corner:rgba(14,116,144,.55); --lm-radar:rgba(14,116,144,.12);
+  box-shadow:0 30px 70px -45px rgba(17,32,58,.35);
 }
-.map-pin svg{ width:100%; height:100%; fill:currentColor; }
-.map-pin circle{ fill:#fff; }
-@keyframes mapPin{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
 
-.map-gate{
-  padding:16px 18px 14px;
-  display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px;
+.locmap-stage{
+  position:relative; overflow:hidden; min-height:300px;
+  background-image:
+    linear-gradient(var(--lm-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--lm-grid) 1px, transparent 1px);
+  background-size:28px 28px;
 }
-.map-card.is-loaded #mapLoad,
-.map-card.is-loaded .map-note{ display:none; }
-.map-addr{ margin:0; flex:1 1 160px; font-size:13.5px; line-height:1.45; color:var(--ink-2); }
-.map-addr strong{ color:var(--ink); font-weight:600; }
-.map-note{ margin:0; flex:1 1 100%; font-size:11px; color:var(--ink-3); }
-
-.map-stage iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
-/* the map itself only comes in light; at night it is turned dark to match */
-:root[data-theme="night"] .map-stage iframe{ filter:invert(.92) hue-rotate(180deg) saturate(.8) brightness(.95); }
-
-.map-route{
-  display:flex; align-items:center; gap:8px; padding:12px 18px;
-  border-top:1px solid var(--line);
-  color:var(--ink-2); font-size:14px; font-weight:500; text-decoration:none;
-  transition:color .25s var(--ease), background .25s var(--ease);
+.lm-art{ position:absolute; inset:0; width:100%; height:100%; }
+.lm-water{ fill:none; stroke:var(--lm-water); stroke-width:64; stroke-linecap:round; }
+.lm-label{ fill:var(--lm-label); font:600 15px/1 var(--f-mono, monospace); letter-spacing:.42em; }
+.lm-blocks rect{ fill:var(--lm-block); stroke:var(--lm-block-line); }
+.lm-roads path{ fill:none; stroke:var(--lm-road); stroke-width:7; stroke-linecap:round; }
+.lm-main path{ fill:none; stroke:var(--lm-main); stroke-width:13; stroke-linecap:round; }
+.lm-route{
+  fill:none; stroke:var(--lm-route); stroke-width:3.5; stroke-linecap:round;
+  stroke-dasharray:10 12; filter:drop-shadow(0 0 6px var(--lm-route));
+  animation:lmRoute 1.6s linear infinite;
 }
-.map-route:hover{ color:var(--accent); background:var(--surface-2); }
-.map-route svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linejoin:round; }
+@keyframes lmRoute{ to{ stroke-dashoffset:-44; } }
 
-@media (prefers-reduced-motion:reduce){ .map-pin{ animation:none; } }
-@media (max-width:900px){ .map-card{ max-width:none; } }
+/* a slow radar sweep around the pin */
+.lm-radar{
+  position:absolute; left:38%; top:53%; width:300px; height:300px; margin:-150px 0 0 -150px;
+  border-radius:50%; pointer-events:none;
+  background:conic-gradient(from 0deg, var(--lm-radar), transparent 22%);
+  -webkit-mask:radial-gradient(circle, #000 0 69%, transparent 70%);
+          mask:radial-gradient(circle, #000 0 69%, transparent 70%);
+  animation:lmSweep 5s linear infinite;
+}
+@keyframes lmSweep{ to{ transform:rotate(360deg); } }
+
+/* HUD corner brackets */
+.lm-corner{ position:absolute; width:18px; height:18px; border:2px solid var(--lm-corner); pointer-events:none; }
+.lm-tl{ left:14px; top:14px; border-right:0; border-bottom:0; border-top-left-radius:6px; }
+.lm-tr{ right:14px; top:14px; border-left:0; border-bottom:0; border-top-right-radius:6px; }
+.lm-bl{ left:14px; bottom:14px; border-right:0; border-top:0; border-bottom-left-radius:6px; }
+.lm-br{ right:14px; bottom:14px; border-left:0; border-top:0; border-bottom-right-radius:6px; }
+
+/* ── the robot pin ── */
+.robopin{
+  position:absolute; left:38%; top:53%; width:80px; height:112px; margin:-108px 0 0 -40px;
+  padding:0; border:0; background:none; cursor:pointer; z-index:2;
+  -webkit-tap-highlight-color:transparent;
+}
+.rp-svg{ position:relative; width:100%; height:100%; overflow:visible; z-index:1;
+  filter:drop-shadow(0 8px 10px rgba(0,0,0,.35)); }
+.rp-tilt{ transform-origin:40px 104px; transform:rotate(var(--rp-tilt, 0deg)); transition:transform .25s var(--ease); }
+.rp-body{ fill:url(#rpShell); stroke:#8094B2; stroke-width:1.2; }
+.rp-ear { fill:#8FA3C0; }
+.rp-visor{ fill:#0D1828; }
+.rp-eyes{ transform:translate(var(--rp-ex, 0px), var(--rp-ey, 0px)); transition:transform .12s linear; }
+.rp-eye { fill:#5FE9F5; filter:drop-shadow(0 0 3px #5FE9F5); animation:rpBlink 4.6s infinite; transform-box:fill-box; transform-origin:center; }
+.rp-happy path{ fill:none; stroke:#5FE9F5; stroke-width:3; stroke-linecap:round; }
+.rp-happy{ opacity:0; }
+.rp-mast{ stroke:#8094B2; stroke-width:2.4; stroke-linecap:round; }
+.rp-tip { fill:#E47A1E; transition:filter .25s; }
+.rp-core{ fill:#E47A1E; opacity:.9; }
+@keyframes rpBlink{ 0%,92%,100%{ transform:scaleY(1); } 95%{ transform:scaleY(.1); } }
+
+/* ground shadow with a sonar ping */
+.rp-shadow{
+  position:absolute; left:50%; bottom:-7px; width:40px; height:12px; margin-left:-20px;
+  border-radius:50%; background:rgba(0,0,0,.35); filter:blur(2px);
+}
+.rp-shadow::before, .rp-shadow::after{
+  content:""; position:absolute; left:50%; top:50%; width:34px; height:12px; margin:-6px 0 0 -17px;
+  border:2px solid var(--lm-route); border-radius:50%; opacity:0;
+  animation:rpPing 2.4s var(--ease) infinite;
+}
+.rp-shadow::after{ animation-delay:1.2s; }
+@keyframes rpPing{ 0%{ transform:scale(.6); opacity:.8; } 100%{ transform:scale(3.2); opacity:0; } }
+
+/* noticing the pointer */
+.robopin.is-aware .rp-tip{ filter:drop-shadow(0 0 6px #FFA14A) brightness(1.2); }
+/* the pointer is on it: it hops, smiles and says hello */
+.robopin.is-happy .rp-svg{ animation:rpHop .7s var(--ease); }
+.robopin.is-happy .rp-eyes{ opacity:0; }
+.robopin.is-happy .rp-happy{ opacity:1; }
+@keyframes rpHop{ 0%{ transform:translateY(0); } 35%{ transform:translateY(-14px) scale(1.04); } 60%{ transform:translateY(0) scale(.98,1.02); } 100%{ transform:none; } }
+
+.rp-bubble{
+  position:absolute; left:50%; bottom:calc(100% + 10px); transform:translate(-50%, 6px) scale(.9);
+  padding:7px 12px; border-radius:10px; white-space:nowrap;
+  font:600 13px/1 var(--f-body); color:var(--on-accent, #062029);
+  background:var(--accent); box-shadow:0 8px 20px -8px var(--accent);
+  opacity:0; pointer-events:none; transition:opacity .2s, transform .25s var(--ease);
+}
+.rp-bubble::after{
+  content:""; position:absolute; left:50%; top:100%; margin-left:-6px;
+  border:6px solid transparent; border-top-color:var(--accent);
+}
+.robopin.is-happy .rp-bubble,
+.robopin:focus-visible .rp-bubble{ opacity:1; transform:translate(-50%, 0) scale(1); }
+.robopin:focus-visible{ outline:none; }
+.robopin:focus-visible .rp-body{ stroke:var(--accent); stroke-width:2.5; }
+
+/* ── the info panel ── */
+.locmap-panel{
+  position:relative; z-index:2;
+  display:flex; flex-direction:column; justify-content:center; gap:12px;
+  padding:clamp(22px,3vw,34px);
+  background:color-mix(in srgb, var(--bg) 78%, transparent);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  border-left:1px solid var(--line);
+}
+.locmap-panel h3{ margin:0; font-size:clamp(20px,2vw,24px); }
+.lm-chip{
+  display:inline-flex; align-items:center; gap:8px; margin:0;
+  font:600 11.5px/1 var(--f-mono, monospace); letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent);
+}
+.lm-live{ width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 0 var(--accent); animation:lmLive 2s infinite; }
+@keyframes lmLive{ 0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); } 100%{ box-shadow:0 0 0 10px transparent; } }
+.lm-addr{ margin:0; color:var(--ink-2); font-size:15.5px; line-height:1.55; }
+.lm-actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; }
+.lm-route-btn svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linejoin:round; }
+.lm-note{ margin:2px 0 0; font-size:11.5px; color:var(--ink-3); }
+
+/* the real map, once asked for */
+.locmap-stage iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+:root[data-theme="night"] .locmap-stage iframe{ filter:invert(.92) hue-rotate(180deg) saturate(.8) brightness(.95); }
+.locmap.is-loaded #mapLoad, .locmap.is-loaded .lm-note{ display:none; }
+
+@media (max-width:900px){
+  .locmap{ grid-template-columns:1fr; min-height:0; }
+  .locmap-stage{ min-height:260px; }
+  .locmap-panel{ border-left:0; border-top:1px solid var(--line); }
+  .lm-radar, .robopin{ left:50%; }
+}
+@media (prefers-reduced-motion:reduce){
+  .lm-route, .lm-radar, .rp-eye, .rp-shadow::before, .rp-shadow::after, .lm-live{ animation:none; }
+  .robopin.is-happy .rp-svg{ animation:none; }
+}
 
 /* ── responsive ──────────────────────────────────────────────────────── */
 

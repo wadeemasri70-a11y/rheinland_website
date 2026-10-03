@@ -958,13 +958,20 @@
     });
   }
 
-  /* ── map: loads only when asked for ─────────────────────────────────── */
+  /* ── where we are: robot pin and the map behind it ───────────────────
+     The pin notices the pointer from a distance: its eyes follow it and
+     it leans towards it, more the closer the pointer gets. Within reach it
+     hops, smiles and says hello. On touch screens a tap does the same.
+     The real Google map loads only on request. */
 
   (function officeMap() {
-    var btn = document.getElementById('mapLoad');
+    var card = document.getElementById('locmap');
     var stage = document.getElementById('mapStage');
-    if (!btn || !stage) return;
-    btn.addEventListener('click', function () {
+    var pin = document.getElementById('roboPin');
+    var btn = document.getElementById('mapLoad');
+    if (!card || !stage) return;
+
+    if (btn) btn.addEventListener('click', function () {
       var f = document.createElement('iframe');
       f.title = 'Google Maps: Gnadentaler Allee 14, 41468 Neuss';
       f.loading = 'lazy';
@@ -974,8 +981,80 @@
         '&z=16&hl=' + (lang === 'en' ? 'en' : 'de') + '&output=embed';
       stage.innerHTML = '';
       stage.appendChild(f);
-      var card = document.getElementById('mapCard');
-      if (card) card.classList.add('is-loaded');
+      card.classList.add('is-loaded');
+      pin = null;
+    });
+
+    if (!pin) return;
+
+    var REACH = 340;          // px at which it starts to notice the pointer
+    var CLOSE = 64;           // px at which it says hello
+    var px = 0, py = 0, queued = false, inView = false, happyUntil = 0;
+
+    function setHappy(on) {
+      if (!pin) return;
+      if (on && !pin.classList.contains('is-happy')) {
+        pin.classList.add('is-happy');
+        happyUntil = Date.now() + 1400;
+      } else if (!on && Date.now() > happyUntil) {
+        pin.classList.remove('is-happy');
+      }
+    }
+
+    function rest() {
+      if (!pin) return;
+      pin.style.setProperty('--rp-ex', '0px');
+      pin.style.setProperty('--rp-ey', '0px');
+      pin.style.setProperty('--rp-tilt', '0deg');
+      pin.classList.remove('is-aware');
+      setHappy(false);
+    }
+
+    function look() {
+      queued = false;
+      if (!pin) return;
+      var r = pin.getBoundingClientRect();
+      var cx = r.left + r.width / 2, cy = r.top + r.height * 0.42;   // the face
+      var dx = px - cx, dy = py - cy;
+      var d = Math.sqrt(dx * dx + dy * dy) || 1;
+      if (d > REACH) { rest(); return; }
+      var a = 1 - d / REACH;                       // 0 far … 1 on top of it
+      var ux = dx / d, uy = dy / d;
+      pin.style.setProperty('--rp-ex', (ux * 3.6 * Math.min(1, a * 2)).toFixed(2) + 'px');
+      pin.style.setProperty('--rp-ey', (uy * 2.4 * Math.min(1, a * 2)).toFixed(2) + 'px');
+      pin.style.setProperty('--rp-tilt', (ux * 11 * a).toFixed(2) + 'deg');
+      pin.classList.add('is-aware');
+      setHappy(d < CLOSE);
+    }
+
+    function onMove(e) {
+      if (!inView || !pin) return;
+      px = e.clientX; py = e.clientY;
+      if (!queued) { queued = true; requestAnimationFrame(look); }
+    }
+
+    // only listen while the map is on screen
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (en) {
+        inView = en[0].isIntersecting;
+        if (!inView) rest();
+      }).observe(card);
+    } else { inView = true; }
+
+    window.addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'touch') return;
+      onMove(e);
+    }, { passive: true });
+    document.addEventListener('mouseleave', rest);
+
+    // touch, keyboard and click: say hello
+    pin.addEventListener('click', function () {
+      if (!pin) return;
+      pin.classList.remove('is-happy');
+      void pin.offsetWidth;                         // restart the hop
+      pin.classList.add('is-happy');
+      happyUntil = Date.now() + 2200;
+      setTimeout(function () { if (pin && Date.now() >= happyUntil) pin.classList.remove('is-happy'); }, 2300);
     });
   }());
 
