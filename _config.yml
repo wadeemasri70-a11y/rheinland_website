@@ -1,0 +1,5 @@
+# GitHub Pages build settings.
+# Project notes stay in the repository and are not published on the site.
+exclude:
+  - README.md
+  - CLAUDE.md
