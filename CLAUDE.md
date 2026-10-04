@@ -75,6 +75,10 @@ webmail https://www.ud-mail.de).
   reinlanddigitalwerk@gmail.com).
 - Search Console: verified, homepage indexed 2026-10-03, sitemap submitted.
   Google Business Profile created (profile strength 78% at last check).
+  Review link: https://g.page/r/Cd2iO0ntKEStEBM/review (place ID
+  `ChIJ35624n21uEcR3aI7Se0oRK0`). The site icon (`favicon.ico`,
+  `favicon-192.png`, white tile) was added 2026-10-04; Google still showed
+  the globe that day and picks it up on recrawl.
 
 ## SEO rules
 
@@ -96,5 +100,4 @@ webmail https://www.ud-mail.de).
 - Impressum: Handelsregister and USt-IdNr if they exist.
 - Google Fonts are loaded from Google (a DSGVO risk in Germany); self-hosting
   was offered, not yet done.
-- The user reported trouble logging into the info@ webmail; the contact
-  form has not yet been confirmed end-to-end from their browser.
+- Contact form confirmed working end-to-end (FormSubmit → info@) on 2026-10-04.
