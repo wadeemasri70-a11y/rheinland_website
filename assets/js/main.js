@@ -821,16 +821,19 @@
   }());
 
   /* ── contact form ────────────────────────────────────────────────────
-     With a Web3Forms access key the enquiry is posted straight to the
-     company inbox. Without one the form falls back to composing it in the
-     visitor's mail client. The key is not a secret: it only tells
-     Web3Forms which inbox to deliver to, and it is meant to sit in the
-     page.
+     The enquiry is posted straight to the company inbox. With FORM_KEY
+     emptied, the form falls back to composing it in the visitor's mail
+     client instead.
      ──────────────────────────────────────────────────────────────────── */
 
   var TARGET_MAIL = 'info@rheinlanddigitalwerk.de';
-  var FORM_KEY = 'ad79ca8f-b57b-4812-bb28-b6602d901800';
-  var FORM_URL = 'https://api.web3forms.com/submit';
+  /* FormSubmit delivers straight to the address in the URL: no account
+     and no key. The address was confirmed once through the 'Activate Form'
+     link FormSubmit mailed to it. (Web3Forms was used before, but it had
+     put info@ on its bounce list from tests sent before the mailbox
+     existed, and dropped every enquiry while still reporting success.) */
+  var FORM_KEY = TARGET_MAIL;
+  var FORM_URL = 'https://formsubmit.co/' + TARGET_MAIL;
 
   /* sent directly, the confirmation says so rather than pointing at a
      mail programme */
@@ -898,22 +901,21 @@
          the frame on to danke.html on this site, which the page can read;
          anything else means the enquiry did not go through. */
       var fields = {
-        access_key: FORM_KEY,
-        subject: subject,
-        /* the enquiry shows up in the inbox under the visitor's own name,
-           and Reply goes straight back to their address */
-        from_name: g('name') || 'Website Rheinland Digitalwerk',
-        name: g('name'),
-        email: g('email'),
-        replyto: g('email'),
-        company: g('company'),
-        phone: g('phone'),
-        topic: (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '\u2014',
-        message: g('message'),
-        redirect: location.origin + location.pathname.replace(/[^/]*$/, '') + 'danke.html'
+        _subject: subject,
+        _template: 'table',
+        _captcha: 'false',
+        /* Reply goes straight back to the visitor */
+        _replyto: g('email'),
+        _next: location.origin + location.pathname.replace(/[^/]*$/, '') + 'danke.html',
+        Name: g('name'),
+        'E-Mail': g('email'),
+        Unternehmen: g('company'),
+        Telefon: g('phone'),
+        Thema: (form.topic && form.topic.selectedIndex > 0) ? g('topic') : '\u2014',
+        Nachricht: g('message')
       };
-      // only a bot ticks the hidden box; people send no botcheck at all
-      if (d.get('botcheck')) fields.botcheck = 'true';
+      // only a bot ticks the hidden box; FormSubmit drops anything with _honey set
+      if (d.get('botcheck')) fields._honey = 'bot';
 
       var sink = document.getElementById('formSink');
       var post = document.createElement('form');

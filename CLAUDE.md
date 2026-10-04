@@ -54,13 +54,17 @@ info@rheinlanddigitalwerk.de. Services: Webdesign, Grafikdesign,
 
 ## Contact form
 
-Posts to Web3Forms (`FORM_KEY` in `main.js`, a public key registered to
-info@rheinlanddigitalwerk.de) through a hidden form into the `formSink`
-iframe — `fetch()` was blocked by CORS. Success = the frame lands on
-`danke.html`. Web3Forms refuses requests from servers/datacenter IPs, so it
-cannot be tested end-to-end from a cloud session; the user tests from their
-own browser. info@ is a real mailbox at United Domains (webmail
-https://www.ud-mail.de).
+Posts to **FormSubmit** (`https://formsubmit.co/info@rheinlanddigitalwerk.de`,
+no account or key) through a hidden form into the `formSink` iframe —
+`fetch()` was blocked by CORS. Success = FormSubmit sends the frame on to
+`danke.html` (`_next`). The address was activated once via the
+"Activate Form" mail FormSubmit sends on first use. Web3Forms was used
+before but had put info@ on its bounce/suppression list (tests sent before
+the mailbox existed) and silently dropped mail while reporting success —
+do not go back to it for info@. Form services refuse datacenter IPs, so
+end-to-end tests must be done by the user from their own browser. info@
+is a real mailbox at United Domains (login user `rheinlanddigitalwerk-de-0001`,
+webmail https://www.ud-mail.de).
 
 ## DNS (United Domains) and Google
 
